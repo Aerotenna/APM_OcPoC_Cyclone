@@ -28,6 +28,7 @@
 #include "RCInput_SBUS.h"
 #include "RCInput_UART.h"
 #include "RCInput_UDP.h"
+#include "RCInput_ZYNQ.h"
 #include "RCOutput_AioPRU.h"
 #include "RCOutput_Bebop.h"
 #include "RCOutput_Disco.h"
