@@ -94,6 +94,13 @@ const AP_Param::GroupInfo AC_AttitudeControl::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("ANG_LIM_TC", 16, AC_AttitudeControl, _angle_limit_tc, AC_ATTITUDE_CONTROL_ANGLE_LIMIT_TC_DEFAULT),
 
+    // @Param: STAB_PID
+    // @DisplayName: Enable PID structure for Stabilize loop Pitch/Roll Control
+    // @Description: Enable PID structure for Stabilize loop Pitch/Roll Control
+    // @Values: 0:Disabled, 1:Enabled
+    // @User: Advanced
+    AP_GROUPINFO("STAB_PID", 17, AC_AttitudeControl, _stabilize_pid_enabled, 0),
+
     AP_GROUPEND
 };
 
@@ -124,6 +131,10 @@ void AC_AttitudeControl::relax_attitude_controllers()
     get_rate_roll_pid().reset_I();
     get_rate_pitch_pid().reset_I();
     get_rate_yaw_pid().reset_I();
+
+    // Reset integrators for stabilize PID controller
+    get_angle_roll_pid().reset_I();
+    get_angle_pitch_pid().reset_I();
 }
 
 void AC_AttitudeControl::reset_rate_controller_I_terms()
@@ -131,6 +142,10 @@ void AC_AttitudeControl::reset_rate_controller_I_terms()
     get_rate_roll_pid().reset_I();
     get_rate_pitch_pid().reset_I();
     get_rate_yaw_pid().reset_I();
+
+    // Reset stabilize PID integrators
+    get_angle_roll_pid().reset_I();
+    get_angle_pitch_pid().reset_I();
 }
 
 // The attitude controller works around the concept of the desired attitude, target attitude
@@ -567,14 +582,44 @@ Vector3f AC_AttitudeControl::update_ang_vel_target_from_att_error(Vector3f attit
     // Compute the roll angular velocity demand from the roll angle error
     if (_use_ff_and_input_shaping) {
         rate_target_ang_vel.x = sqrt_controller(attitude_error_rot_vec_rad.x, _p_angle_roll.kP(), constrain_float(get_accel_roll_max_radss()/2.0f,  AC_ATTITUDE_ACCEL_RP_CONTROLLER_MIN_RADSS, AC_ATTITUDE_ACCEL_RP_CONTROLLER_MAX_RADSS));
+    }else if (_stabilize_pid_enabled) {
+        // PID Controller for Stabilize outer-loop
+        // pass error to PID controller
+        get_angle_roll_pid().set_input_filter_d(attitude_error_rot_vec_rad.x);
+        get_angle_roll_pid().set_desired_rate(_attitude_target_euler_angle.x);
+
+        float roll_angle_integrator = get_angle_roll_pid().get_integrator();
+
+        // Ensure that integrator can only be reduced if the output is saturated
+        if (!_motors.limit.roll_pitch || ((roll_angle_integrator > 0 && attitude_error_rot_vec_rad.x < 0) || (roll_angle_integrator < 0 && attitude_error_rot_vec_rad.x > 0))) {
+            roll_angle_integrator = get_angle_roll_pid().get_i();
+        }
+
+        rate_target_ang_vel.x = get_angle_roll_pid().get_p() + roll_angle_integrator + get_angle_roll_pid().get_d();
     }else{
+        // Baseline P Controller for Stabilize outer-loop
         rate_target_ang_vel.x = _p_angle_roll.kP() * attitude_error_rot_vec_rad.x;
     }
 
     // Compute the pitch angular velocity demand from the roll angle error
     if (_use_ff_and_input_shaping) {
         rate_target_ang_vel.y = sqrt_controller(attitude_error_rot_vec_rad.y, _p_angle_pitch.kP(), constrain_float(get_accel_pitch_max_radss()/2.0f,  AC_ATTITUDE_ACCEL_RP_CONTROLLER_MIN_RADSS, AC_ATTITUDE_ACCEL_RP_CONTROLLER_MAX_RADSS));
+    }else if (_stabilize_pid_enabled) {
+        // PID Controller for Stabilize outer-loop
+        // pass error to PID controller
+        get_angle_pitch_pid().set_input_filter_d(attitude_error_rot_vec_rad.y);
+        get_angle_pitch_pid().set_desired_rate(_attitude_target_euler_angle.y);
+
+        float pitch_angle_integrator = get_angle_pitch_pid().get_integrator();
+
+        // Ensure that integrator can only be reduced if the output is saturated
+        if (!_motors.limit.roll_pitch || ((pitch_angle_integrator > 0 && attitude_error_rot_vec_rad.y < 0) || (pitch_angle_integrator < 0 && attitude_error_rot_vec_rad.y > 0))) {
+            pitch_angle_integrator = get_angle_roll_pid().get_i();
+        }
+
+        rate_target_ang_vel.y = get_angle_pitch_pid().get_p() + pitch_angle_integrator + get_angle_pitch_pid().get_d();
     }else{
+        // Baseline P Controller for Stabilize outer-loop
         rate_target_ang_vel.y = _p_angle_pitch.kP() * attitude_error_rot_vec_rad.y;
     }
 

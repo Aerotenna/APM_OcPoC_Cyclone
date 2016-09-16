@@ -170,7 +170,10 @@ enum tuning_func {
     TUNING_RATE_ROLL_FF =               53, // body frame roll rate controller FF term
     TUNING_RATE_YAW_FF =                54, // body frame yaw rate controller FF term
     TUNING_RATE_MOT_YAW_HEADROOM =      55, // motors yaw headroom minimum
-    TUNING_RATE_YAW_FILT =              56  // yaw rate input filter
+    TUNING_RATE_YAW_FILT =              56,  // yaw rate input filter
+    TUNING_STABILIZE_PID_KP =           57, // stabilize roll/pitch PID controller's P term
+    TUNING_STABILIZE_PID_KI =           58, // stabilize roll/pitch PID controller's I term
+    TUNING_STABILIZE_PID_KD =           59 // stabilize roll/pitch PID controller's D term
 };
 
 // Acro Trainer types

@@ -134,6 +134,80 @@ const AP_Param::GroupInfo AC_AttitudeControl_Multi::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("THR_MIX_MAX", 5, AC_AttitudeControl_Multi, _thr_mix_max, AC_ATTITUDE_CONTROL_MAX_DEFAULT),
 
+	// @Param: STB_PIT_kP
+    // @DisplayName: Stabilize Pitch axis controller P gain
+    // @Description: Pitch axis controller P gain.  Converts the difference between desired pitch and actual pitch into a pitch rate output
+    // @Range: 0.0 12.0
+    // @Increment: 0.1
+    // @User: Standard
+
+    // @Param: STB_PIT_kI
+    // @DisplayName: Stabilize Pitch axis controller I gain
+    // @Description: Stabilize Pitch axis controller I gain.  Corrects long-term difference in desired pitch vs actual pitch
+    // @Range: 0.0 5.0
+    // @Increment: 0.01
+    // @User: Standard
+
+    // @Param: STB_PIT_IMX
+    // @DisplayName: Stabilize Pitch axis controller I gain maximum
+    // @Description: Stabilize Pitch axis controller I gain maximum.  Constrains the maximum rate output that the I gain will output
+    // @Range: 0 1
+    // @Increment: 0.01
+    // @Units: Percent
+    // @User: Standard
+
+    // @Param: STB_PIT_kD
+    // @DisplayName: Stabilize Pitch axis controller D gain
+    // @Description: Stabilize Pitch axis controller D gain.  Compensates for short-term change in desired pitch vs actual pitch
+    // @Range: 0.0 5.0
+    // @Increment: 0.001
+    // @User: Standard
+
+    // @Param: STB_PIT_FLT
+    // @DisplayName: Stabilize Pitch axis conroller input frequency in Hz
+    // @Description: Stabilize Pitch axis conroller input frequency in Hz
+    // @Range: 1 100
+    // @Increment: 1
+    // @Units: Hz
+    AP_SUBGROUPINFO(_pid_angle_pitch, "STB_PIT_", 6, AC_AttitudeControl_Multi, AC_PID),
+
+	// @Param: STB_RLL_kP
+    // @DisplayName: Stabilize Roll axis controller P gain
+    // @Description: Stabilize Roll axis controller P gain.  Converts the difference between desired roll and actual roll into a rate output
+    // @Range: 0.0 12.0
+    // @Increment: 0.1
+    // @User: Standard
+
+    // @Param: STB_RLL_kI
+    // @DisplayName: Stabilize Roll axis controller I gain
+    // @Description: Stabilize Roll axis controller I gain.  Corrects long-term difference in desired roll vs actual roll
+    // @Range: 0.0 5.0
+    // @Increment: 0.01
+    // @User: Standard
+
+    // @Param: STB_RLL_IMX
+    // @DisplayName: Stabilize Roll axis controller I gain maximum
+    // @Description: Stabilize Roll axis controller I gain maximum.  Constrains the maximum rate output that the I gain will output
+    // @Range: 0 1
+    // @Increment: 0.01
+    // @Units: Percent
+    // @User: Standard
+
+    // @Param: STB_RLL_kD
+    // @DisplayName: Stabilize Roll axis controller D gain
+    // @Description: Stabilize Roll axis controller D gain.  Compensates for short-term change in desired roll vs actual roll
+    // @Range: 0.0 5.0
+    // @Increment: 0.001
+    // @User: Standard
+
+    // @Param: STB_RLL_FLT
+    // @DisplayName: Stabilize Roll axis conroller input frequency in Hz
+    // @Description: Stabilize Roll axis conroller input frequency in Hz
+    // @Range: 1 100
+    // @Increment: 1
+    // @Units: Hz
+    AP_SUBGROUPINFO(_pid_angle_roll, "STB_RLL_", 7, AC_AttitudeControl_Multi, AC_PID),
+
     AP_GROUPEND
 };
 
@@ -142,7 +216,10 @@ AC_AttitudeControl_Multi::AC_AttitudeControl_Multi(AP_AHRS &ahrs, const AP_Vehic
     _motors_multi(motors),
     _pid_rate_roll(AC_ATC_MULTI_RATE_RP_P, AC_ATC_MULTI_RATE_RP_I, AC_ATC_MULTI_RATE_RP_D, AC_ATC_MULTI_RATE_RP_IMAX, AC_ATC_MULTI_RATE_RP_FILT_HZ, dt),
     _pid_rate_pitch(AC_ATC_MULTI_RATE_RP_P, AC_ATC_MULTI_RATE_RP_I, AC_ATC_MULTI_RATE_RP_D, AC_ATC_MULTI_RATE_RP_IMAX, AC_ATC_MULTI_RATE_RP_FILT_HZ, dt),
-    _pid_rate_yaw(AC_ATC_MULTI_RATE_YAW_P, AC_ATC_MULTI_RATE_YAW_I, AC_ATC_MULTI_RATE_YAW_D, AC_ATC_MULTI_RATE_YAW_IMAX, AC_ATC_MULTI_RATE_YAW_FILT_HZ, dt)
+    _pid_rate_yaw(AC_ATC_MULTI_RATE_YAW_P, AC_ATC_MULTI_RATE_YAW_I, AC_ATC_MULTI_RATE_YAW_D, AC_ATC_MULTI_RATE_YAW_IMAX, AC_ATC_MULTI_RATE_YAW_FILT_HZ, dt),
+	// add PID structure for Stabilize outer-loop
+    _pid_angle_pitch(AC_ATC_MULTI_ANGLE_kP, AC_ATC_MULTI_ANGLE_kI, AC_ATC_MULTI_ANGLE_kD, AC_ATC_MULTI_RATE_RP_IMAX, AC_ATC_MULTI_RATE_RP_FILT_HZ, dt),
+    _pid_angle_roll(AC_ATC_MULTI_ANGLE_kP, AC_ATC_MULTI_ANGLE_kI, AC_ATC_MULTI_ANGLE_kD, AC_ATC_MULTI_RATE_RP_IMAX, AC_ATC_MULTI_RATE_RP_FILT_HZ, dt)
 {
     AP_Param::setup_object_defaults(this, var_info);
 }

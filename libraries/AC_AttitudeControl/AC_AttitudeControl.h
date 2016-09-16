@@ -73,6 +73,9 @@ public:
     virtual AC_PID& get_rate_roll_pid() = 0;
     virtual AC_PID& get_rate_pitch_pid() = 0;
     virtual AC_PID& get_rate_yaw_pid() = 0;
+    // add PID structure for Stabilize outer-loop
+    virtual AC_PID& get_angle_roll_pid() = 0;
+    virtual AC_PID& get_angle_pitch_pid() = 0;
 
     // Gets the roll acceleration limit in centidegrees/s/s
     float get_accel_roll_max() { return _accel_roll_max; }
@@ -296,6 +299,9 @@ protected:
 
     // Angle limit time constant (to maintain altitude)
     AP_Float            _angle_limit_tc;
+
+    // Enable/Disable PID structure for Stabilize outer-loop
+    AP_Int8             _stabilize_pid_enabled;
 
     // Intersampling period in seconds
     float               _dt;

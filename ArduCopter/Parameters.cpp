@@ -370,7 +370,7 @@ const AP_Param::Info Copter::var_info[] = {
     // @DisplayName: Channel 6 Tuning
     // @Description: Controls which parameters (normally PID gains) are being tuned with transmitter's channel 6 knob
     // @User: Standard
-    // @Values: 0:None,1:Stab Roll/Pitch kP,4:Rate Roll/Pitch kP,5:Rate Roll/Pitch kI,21:Rate Roll/Pitch kD,3:Stab Yaw kP,6:Rate Yaw kP,26:Rate Yaw kD,14:Altitude Hold kP,7:Throttle Rate kP,34:Throttle Accel kP,35:Throttle Accel kI,36:Throttle Accel kD,42:Loiter Speed,12:Loiter Pos kP,22:Velocity XY kP,28:Velocity XY kI,10:WP Speed,25:Acro RollPitch kP,40:Acro Yaw kP,13:Heli Ext Gyro,17:OF Loiter kP,18:OF Loiter kI,19:OF Loiter kD,38:Declination,39:Circle Rate,41:RangeFinder Gain,46:Rate Pitch kP,47:Rate Pitch kI,48:Rate Pitch kD,49:Rate Roll kP,50:Rate Roll kI,51:Rate Roll kD,52:Rate Pitch FF,53:Rate Roll FF,54:Rate Yaw FF
+    // @Values: 0:None,1:Stab Roll/Pitch kP,4:Rate Roll/Pitch kP,5:Rate Roll/Pitch kI,21:Rate Roll/Pitch kD,3:Stab Yaw kP,6:Rate Yaw kP,26:Rate Yaw kD,14:Altitude Hold kP,7:Throttle Rate kP,34:Throttle Accel kP,35:Throttle Accel kI,36:Throttle Accel kD,42:Loiter Speed,12:Loiter Pos kP,22:Velocity XY kP,28:Velocity XY kI,10:WP Speed,25:Acro RollPitch kP,40:Acro Yaw kP,13:Heli Ext Gyro,17:OF Loiter kP,18:OF Loiter kI,19:OF Loiter kD,38:Declination,39:Circle Rate,41:RangeFinder Gain,46:Rate Pitch kP,47:Rate Pitch kI,48:Rate Pitch kD,49:Rate Roll kP,50:Rate Roll kI,51:Rate Roll kD,52:Rate Pitch FF,53:Rate Roll FF,54:Rate Yaw FF,57:Stab PID kP,58:Stab PID kI,59:Stab PID kD
     GSCALAR(radio_tuning, "TUNE",                   0),
 
     // @Param: TUNE_LOW
@@ -1089,6 +1089,12 @@ void Copter::convert_pid_parameters(void)
         { Parameters::k_param_pid_rate_yaw, 0, AP_PARAM_FLOAT, "ATC_RAT_YAW_P" },
         { Parameters::k_param_pid_rate_yaw, 1, AP_PARAM_FLOAT, "ATC_RAT_YAW_I" },
         { Parameters::k_param_pid_rate_yaw, 2, AP_PARAM_FLOAT, "ATC_RAT_YAW_D" },
+        { Parameters::k_param_pid_stabilize_roll, 0, AP_PARAM_FLOAT, "ATC_STB_RLL_kP" },
+        { Parameters::k_param_pid_stabilize_roll, 1, AP_PARAM_FLOAT, "ATC_STB_RLL_kI" },
+        { Parameters::k_param_pid_stabilize_roll, 2, AP_PARAM_FLOAT, "ATC_STB_RLL_kD" },
+        { Parameters::k_param_pid_stabilize_pitch, 0, AP_PARAM_FLOAT, "ATC_STB_PIT_kP" },
+        { Parameters::k_param_pid_stabilize_pitch, 1, AP_PARAM_FLOAT, "ATC_STB_PIT_kI" },
+        { Parameters::k_param_pid_stabilize_pitch, 2, AP_PARAM_FLOAT, "ATC_STB_PIT_kD" },
 #if FRAME_CONFIG == HELI_FRAME
         { Parameters::k_param_pid_rate_roll,  4, AP_PARAM_FLOAT, "ATC_RAT_RLL_VFF" },
         { Parameters::k_param_pid_rate_pitch, 4, AP_PARAM_FLOAT, "ATC_RAT_PIT_VFF" },
@@ -1099,6 +1105,8 @@ void Copter::convert_pid_parameters(void)
         { Parameters::k_param_pid_rate_roll,  5, AP_PARAM_FLOAT, "ATC_RAT_RLL_IMAX" },
         { Parameters::k_param_pid_rate_pitch, 5, AP_PARAM_FLOAT, "ATC_RAT_PIT_IMAX" },
         { Parameters::k_param_pid_rate_yaw,   5, AP_PARAM_FLOAT, "ATC_RAT_YAW_IMAX" },
+        { Parameters::k_param_pid_stabilize_roll, 5, AP_PARAM_FLOAT, "ATC_STB_RLL_IMX" },
+        { Parameters::k_param_pid_stabilize_pitch, 5, AP_PARAM_FLOAT, "ATC_STB_PIT_IMX" },
 #if FRAME_CONFIG == HELI_FRAME
         { Parameters::k_param_pid_rate_roll,  7, AP_PARAM_FLOAT, "ATC_RAT_RLL_ILMI" },
         { Parameters::k_param_pid_rate_pitch, 7, AP_PARAM_FLOAT, "ATC_RAT_PIT_ILMI" },
@@ -1111,7 +1119,9 @@ void Copter::convert_pid_parameters(void)
         { Parameters::k_param_p_stabilize_yaw, 0, AP_PARAM_FLOAT, "ATC_ANG_YAW_P" },
         { Parameters::k_param_pid_rate_roll, 6, AP_PARAM_FLOAT, "ATC_RAT_RLL_FILT" },
         { Parameters::k_param_pid_rate_pitch, 6, AP_PARAM_FLOAT, "ATC_RAT_PIT_FILT" },
-        { Parameters::k_param_pid_rate_yaw, 6, AP_PARAM_FLOAT, "ATC_RAT_YAW_FILT" }
+        { Parameters::k_param_pid_rate_yaw, 6, AP_PARAM_FLOAT, "ATC_RAT_YAW_FILT" },
+        { Parameters::k_param_pid_stabilize_roll, 6, AP_PARAM_FLOAT, "ATC_STB_RLL_FLT" },
+        { Parameters::k_param_pid_stabilize_pitch, 6, AP_PARAM_FLOAT, "ATC_STB_PIT_FLT" }
     };
     AP_Param::ConversionInfo throttle_conversion_info[] = {
         { Parameters::k_param_throttle_min, 0, AP_PARAM_FLOAT, "MOT_SPIN_MIN" },

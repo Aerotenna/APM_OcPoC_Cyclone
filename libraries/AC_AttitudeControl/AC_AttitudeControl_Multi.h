@@ -38,6 +38,15 @@
 #ifndef AC_ATC_MULTI_RATE_YAW_FILT_HZ
  # define AC_ATC_MULTI_RATE_YAW_FILT_HZ     5.0f
 #endif
+#ifndef AC_ATC_MULTI_ANGLE_kP
+ # define AC_ATC_MULTI_ANGLE_kP             7.3f
+#endif
+#ifndef AC_ATC_MULTI_ANGLE_kI
+ # define AC_ATC_MULTI_ANGLE_kI             0.42f
+#endif
+#ifndef AC_ATC_MULTI_ANGLE_kD
+ # define AC_ATC_MULTI_ANGLE_kD             0.66f
+#endif
 
 
 class AC_AttitudeControl_Multi : public AC_AttitudeControl {
@@ -51,6 +60,9 @@ public:
     AC_PID& get_rate_roll_pid() { return _pid_rate_roll; }
     AC_PID& get_rate_pitch_pid() { return _pid_rate_pitch; }
     AC_PID& get_rate_yaw_pid() { return _pid_rate_yaw; }
+	// add accessors for PID structure for Stabilize outer-loop
+	AC_PID& get_angle_roll_pid() { return _pid_angle_roll; }
+	AC_PID& get_angle_pitch_pid() { return _pid_angle_pitch; }
 
     // Update Alt_Hold angle maximum
     void update_althold_lean_angle_max(float throttle_in) override;
@@ -89,6 +101,9 @@ protected:
     AC_PID                _pid_rate_roll;
     AC_PID                _pid_rate_pitch;
     AC_PID                _pid_rate_yaw;
+	// add PID structure for Stabilize outer-loop
+	AC_PID                _pid_angle_roll;
+	AC_PID                _pid_angle_pitch;
 
     AP_Float              _thr_mix_min;     // throttle vs attitude control prioritisation used when landing (higher values mean we prioritise attitude control over throttle)
     AP_Float              _thr_mix_max;     // throttle vs attitude control prioritisation used during active flight (higher values mean we prioritise attitude control over throttle)

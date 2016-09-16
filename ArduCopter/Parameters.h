@@ -366,6 +366,10 @@ public:
 
         // 254,255: reserved
 
+        // 256: PID controller for Stabilize outer-loop
+        k_param_pid_stabilize_roll = 256,
+        k_param_pid_stabilize_pitch,
+
         // the k_param_* space is 9-bits in size
         // 511: reserved
     };

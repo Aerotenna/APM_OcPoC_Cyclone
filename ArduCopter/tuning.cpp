@@ -211,5 +211,22 @@ void Copter::tuning() {
      case TUNING_RATE_YAW_FILT:
          attitude_control.get_rate_yaw_pid().filt_hz(tuning_value);
          break;
+
+// Stabilize PID controller tuning (separate from original Stabilize P controller)
+    case TUNING_STABILIZE_PID_KP:
+        attitude_control.get_angle_roll_pid().kP(tuning_value);
+        attitude_control.get_angle_pitch_pid().kP(tuning_value);
+        break;
+
+    case TUNING_STABILIZE_PID_KI:
+        attitude_control.get_angle_roll_pid().kI(tuning_value);
+        attitude_control.get_angle_pitch_pid().kI(tuning_value);
+        break;
+
+    case TUNING_STABILIZE_PID_KD:
+        attitude_control.get_angle_roll_pid().kD(tuning_value);
+        attitude_control.get_angle_pitch_pid().kD(tuning_value);
+        break;
+
     }
 }
