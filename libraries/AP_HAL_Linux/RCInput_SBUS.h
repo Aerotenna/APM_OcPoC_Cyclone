@@ -16,7 +16,7 @@
 #pragma once
 
 #include <AP_HAL/AP_HAL.h>
-#if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_DISCO
+#if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_DISCO || CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_ALTERA
 
 #include "RCInput.h"
 #include "RCInput_SBUS.h"
@@ -31,7 +31,7 @@ public:
     void set_device_path(const char *path);
 
 private:
-    const char *device_path = "/dev/uart-sbus";
+    const char *device_path = "/dev/ttyS2";
     int32_t fd = -1;
 };
 
