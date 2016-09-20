@@ -49,7 +49,7 @@ public:
         RangeFinder_TYPE_LWSER  = 8,
         RangeFinder_TYPE_BEBOP  = 9,
         RangeFinder_TYPE_MAVLink = 10,
-	RangeFinder_TYPE_ULANDING= 11,
+	    RangeFinder_TYPE_ULANDING= 11,
     };
 
     enum RangeFinder_Function {
