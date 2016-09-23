@@ -133,6 +133,13 @@ void Copter::althold_run()
 
     case AltHold_Flying:
         motors.set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
+
+        // DAVE EDIT: Call Avoid_uLanding monitor
+        if (avoid_uLanding.monitor()) {
+            // if uLanding detects obstacle to avoid, run the pitch_cmd controller
+            avoid_uLanding.stabilize_avoid(target_pitch);
+        }        
+
         // call attitude controller
         attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate, get_smoothing_gain());
 

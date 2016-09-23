@@ -579,6 +579,10 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
     // get current location
     Vector3f curr_pos = _inav.get_position();
 
+    // DAVE EDIT: set origin and destination for path tracking
+    _pos_control.set_path_track_origin(_origin);
+    _pos_control.set_path_track_destination(_destination);
+
     // calculate terrain adjustments
     float terr_offset = 0.0f;
     if (_terrain_alt && !get_terrain_offset(terr_offset)) {

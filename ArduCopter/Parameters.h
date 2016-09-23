@@ -370,6 +370,9 @@ public:
         k_param_pid_stabilize_roll = 256,
         k_param_pid_stabilize_pitch,
 
+        // DAVE EDIT: add parameter for avoidance_uLanding object
+        k_param_avoid_uLanding = 258,  // avoid_uLanding object
+
         // the k_param_* space is 9-bits in size
         // 511: reserved
     };

@@ -89,6 +89,9 @@
 #include <AC_InputManager/AC_InputManager_Heli.h>   // Heli specific pilot input handling library
 #include <AP_Button/AP_Button.h>
 
+// DAVE EDIT: include the avoid_uLanding header file
+#include <AC_Avoidance/AC_Avoid_uLanding.h>
+
 // Configuration
 #include "defines.h"
 #include "config.h"
@@ -507,6 +510,9 @@ private:
     AC_Avoid avoid;
     AC_WPNav wp_nav;
     AC_Circle circle_nav;
+
+    // DAVE EDIT: Obstacle Avoidance via uLanding object
+    AC_Avoid_uLanding avoid_uLanding;
 
     // Performance monitoring
     int16_t pmTest1;

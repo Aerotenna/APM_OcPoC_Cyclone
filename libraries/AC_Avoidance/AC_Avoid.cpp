@@ -7,7 +7,7 @@ const AP_Param::GroupInfo AC_Avoid::var_info[] = {
     // @Description: Enabled/disable stopping at fence
     // @Values: 0:None,1:StopAtFence
     // @User: Standard
-    AP_GROUPINFO("ENABLE", 1,  AC_Avoid, _enabled, AC_AVOID_STOP_AT_FENCE),
+    AP_GROUPINFO("ENABLE", 1,  AC_Avoid, _enabled, AC_AVOID_DISABLED),//AC_AVOID_STOP_AT_FENCE),
 
     AP_GROUPEND
 };
