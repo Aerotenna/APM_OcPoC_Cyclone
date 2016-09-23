@@ -614,7 +614,7 @@ Vector3f AC_AttitudeControl::update_ang_vel_target_from_att_error(Vector3f attit
 
         // Ensure that integrator can only be reduced if the output is saturated
         if (!_motors.limit.roll_pitch || ((pitch_angle_integrator > 0 && attitude_error_rot_vec_rad.y < 0) || (pitch_angle_integrator < 0 && attitude_error_rot_vec_rad.y > 0))) {
-            pitch_angle_integrator = get_angle_roll_pid().get_i();
+            pitch_angle_integrator = get_angle_pitch_pid().get_i();
         }
 
         rate_target_ang_vel.y = get_angle_pitch_pid().get_p() + pitch_angle_integrator + get_angle_pitch_pid().get_d();

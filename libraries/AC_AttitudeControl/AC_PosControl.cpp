@@ -17,6 +17,67 @@ const AP_Param::GroupInfo AC_PosControl::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("_ACC_XY_FILT", 1, AC_PosControl, _accel_xy_filt_hz, POSCONTROL_ACCEL_FILTER_HZ),
 
+    // DAVE EDIT: Add Path Tracking
+    // @Param: _PTH_TRACK
+    // @DisplayName: Enable/Disable Path Tracking
+    // @Description: Enable/Disable Path Tracking
+    // @Values: 0:Disabled, 1:Enabled
+    // @User: Advanced
+    AP_GROUPINFO("_PTH_TRACK", 2, AC_PosControl, _path_tracking_enabled, 0),
+
+    // @Param: _PTH_ERR_LIM
+    // @DisplayName: Track Error limit
+    // @Description: Track Error limit
+    // @Units: cm
+    // @Range: 50.0 10000.0
+    // @User: Advanced
+    AP_GROUPINFO("_PTH_ERR_LIM", 3, AC_PosControl, _path_error_lim, 500.0),
+
+    // @Param: _PTH_VEL_LIM
+    // @DisplayName: Track Error velocity command limit
+    // @Description: Track Error velocity command limit
+    // @Units: cm/s
+    // @Range: 50.0 500.0
+    // @User: Advanced
+    AP_GROUPINFO("_PTH_VEL_LIM", 4, AC_PosControl, _path_vel_target_lim, 250.0),
+
+    // @Param: _PTH_ERR_P
+    // @DisplayName: Track Error controller P gain
+    // @Description: Track Error controller P gain.  Converts track error into a velocity output (perpendicular to flight path)
+    // @Range: 0.0 12.0
+    // @Increment: 0.01
+    // @User: Standard
+
+    // @Param: _PTH_ERR_I
+    // @DisplayName: Track Error controller I gain
+    // @Description: Track Error controller I gain.  Corrects long-term difference in track error
+    // @Range: 0.0 5.0
+    // @Increment: 0.01
+    // @User: Standard
+
+    // @Param: _PTH_ERR_IMAX
+    // @DisplayName: Track Error controller I gain maximum
+    // @Description: Track Error controller I gain maximum.  Constrains the maximum rate output that the I gain will output
+    // @Range: 0 100
+    // @Increment: 0.01
+    // @Units: cm/s
+    // @User: Standard
+
+    // @Param: _PTH_ERR_D
+    // @DisplayName: Track Error controller D gain
+    // @Description: Track Error controller D gain.  Compensates for short-term change in track error
+    // @Range: 0.0 5.0
+    // @Increment: 0.001
+    // @User: Standard
+
+    // @Param: _PTH_ERR_FILT
+    // @DisplayName: Track Error conroller input frequency in Hz
+    // @Description: Track Error conroller input frequency in Hz
+    // @Range: 1 100
+    // @Increment: 1
+    // @Units: Hz
+    AP_SUBGROUPINFO(_pid_track_err, "_PTH_ERR_", 5, AC_PosControl, AC_PID),
+
     AP_GROUPEND
 };
 
@@ -56,7 +117,10 @@ AC_PosControl::AC_PosControl(const AP_AHRS& ahrs, const AP_InertialNav& inav,
     _alt_max(0.0f),
     _distance_to_target(0.0f),
     _accel_target_jerk_limited(0.0f,0.0f),
-    _accel_target_filter(POSCONTROL_ACCEL_FILTER_HZ)
+    _accel_target_filter(POSCONTROL_ACCEL_FILTER_HZ),
+    // DAVE EDIT: add PID controller for track error
+    _pid_track_err(POSCONTROL_PATH_ERR_kP, POSCONTROL_PATH_ERR_kI, POSCONTROL_PATH_ERR_kD, POSCONTROL_PATH_ERR_IMAX, POSCONTROL_PATH_ERR_FILT_HZ, POSCONTROL_DT_50HZ)
+    
 {
     AP_Param::setup_object_defaults(this, var_info);
 
@@ -100,6 +164,8 @@ void AC_PosControl::set_dt_xy(float dt_xy)
 {
     _dt_xy = dt_xy;
     _pi_vel_xy.set_dt(dt_xy);
+    // DAVE EDIT: Track Error PID needs a time delta
+    _pid_track_err.set_dt(dt_xy);
 }
 
 /// set_speed_z - sets maximum climb and descent rates
@@ -153,7 +219,6 @@ void AC_PosControl::set_alt_target_with_slew(float alt_cm, float dt)
     float curr_alt = _inav.get_altitude();
     _pos_target.z = constrain_float(_pos_target.z,curr_alt-_leash_down_z,curr_alt+_leash_up_z);
 }
-
 
 /// set_alt_target_from_climb_rate - adjusts target up or down using a climb rate in cm/s
 ///     should be called continuously (with dt set to be the expected time between calls)
@@ -814,17 +879,22 @@ void AC_PosControl::pos_to_rate_xy(xy_mode mode, float dt, float ekfNavVelGainSc
         // calculate the distance at which we swap between linear and sqrt velocity response
         linear_distance = _accel_cms/(2.0f*kP*kP);
 
-        if (_distance_to_target > 2.0f*linear_distance) {
-            // velocity response grows with the square root of the distance
-            float vel_sqrt = safe_sqrt(2.0f*_accel_cms*(_distance_to_target-linear_distance));
-            _vel_target.x = vel_sqrt * _pos_error.x/_distance_to_target;
-            _vel_target.y = vel_sqrt * _pos_error.y/_distance_to_target;
+        // DAVE EDIT: Add path tracking
+        if (_path_tracking_enabled) {
+            track_err_to_rate(linear_distance);
         }else{
-            // velocity response grows linearly with the distance
-            _vel_target.x = _p_pos_xy.kP() * _pos_error.x;
-            _vel_target.y = _p_pos_xy.kP() * _pos_error.y;
-        }
 
+            if (_distance_to_target > 2.0f*linear_distance) {
+                // velocity response grows with the square root of the distance
+                float vel_sqrt = safe_sqrt(2.0f*_accel_cms*(_distance_to_target-linear_distance));
+                _vel_target.x = vel_sqrt * _pos_error.x/_distance_to_target;
+                _vel_target.y = vel_sqrt * _pos_error.y/_distance_to_target;
+            }else{
+                // velocity response grows linearly with the distance
+                _vel_target.x = _p_pos_xy.kP() * _pos_error.x;
+                _vel_target.y = _p_pos_xy.kP() * _pos_error.y;
+            }
+        }
         if (mode == XY_MODE_POS_LIMITED_AND_VEL_FF) {
             // this mode is for loiter - rate-limiting the position correction
             // allows the pilot to always override the position correction in
@@ -1008,4 +1078,60 @@ float AC_PosControl::calc_leash_length(float speed_cms, float accel_cms, float k
     }
 
     return leash_length;
+}
+
+// DAVE EDIT: calc_track_err - calculates track error for path following, units in cm
+void AC_PosControl::track_err_to_rate(float linear_distance)
+{
+    Vector3f curr_pos = _inav.get_position();
+    float distToDest;
+    float courseToDest;
+    //float distPath;
+    float coursePath;
+    float TrackErr;
+    float DistErr;
+    Vector2f path_vel_target;
+
+    // calculate distance to destination
+    distToDest = norm((_path_track_destination.y - curr_pos.y),(_path_track_destination.x - curr_pos.x));
+
+    // calculate course to destination
+    courseToDest = atan2((_path_track_destination.y - curr_pos.y),(_path_track_destination.x - curr_pos.x));
+
+    // calculate distance of flight path from previous to next waypoint
+    //distPath = norm((_path_track_destination.y - _path_track_origin.y),(_path_track_destination.x - _path_track_origin.x));
+
+    // calculate course of flight path from previous to next waypoint
+    coursePath = atan2((_path_track_destination.y - _path_track_origin.y),(_path_track_destination.x - _path_track_origin.x));
+
+    // calculate track error from current position perpendicular to flight path
+    TrackErr = distToDest * sin(coursePath - courseToDest);
+    // limit track error
+    TrackErr = constrain_float(TrackErr, -_path_error_lim, _path_error_lim);
+
+    // calculate distance to target waypoint (along the flight path)
+    DistErr = distToDest * cos(coursePath - courseToDest);
+
+    // PID Controller for Track Error
+    // pass track error to PID controller
+    _pid_track_err.set_input_filter_d(TrackErr);
+    
+    // Calculate velocity command
+    path_vel_target.y = constrain_float(_pid_track_err.get_pid(), -_path_vel_target_lim, _path_vel_target_lim);
+
+    // Square Root Controller for Distance Error (along the flight path)
+    if (DistErr > 2.0f*linear_distance) {
+        // velocity response grows with the square root of the distance
+        path_vel_target.x = safe_sqrt(2.0f*_accel_cms*(DistErr-linear_distance));
+    }else{
+        // velocity response grows linearly with the distance
+        path_vel_target.x = _p_pos_xy.kP() * DistErr;
+    }
+
+    // limit velocity command along path
+    path_vel_target.x = constrain_float(path_vel_target.x, -_speed_cms, _speed_cms);
+
+    // Translate velocity commands from TrackErr and distErr to velocity commands relative to Home waypoint
+    _vel_target.x = (path_vel_target.x * cos(coursePath)) + (path_vel_target.y * cos(coursePath - M_PI_2));
+    _vel_target.y = (path_vel_target.x * sin(coursePath)) + (path_vel_target.y * sin(coursePath - M_PI_2));
 }

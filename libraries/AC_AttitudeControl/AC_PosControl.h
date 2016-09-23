@@ -43,6 +43,23 @@
 
 #define POSCONTROL_OVERSPEED_GAIN_Z             2.0f    // gain controlling rate at which z-axis speed is brought back within SPEED_UP and SPEED_DOWN range
 
+// DAVE EDIT: Add definitions for path tracking PID gains
+#ifndef POSCONTROL_PATH_ERR_kP
+ # define POSCONTROL_PATH_ERR_kP             0.75f
+#endif
+#ifndef POSCONTROL_PATH_ERR_kI
+ # define POSCONTROL_PATH_ERR_kI             0.01f
+#endif
+#ifndef POSCONTROL_PATH_ERR_kD
+ # define POSCONTROL_PATH_ERR_kD             0.0f
+#endif
+#ifndef  POSCONTROL_PATH_ERR_IMAX
+ # define  POSCONTROL_PATH_ERR_IMAX         50.0f
+#endif
+#ifndef  POSCONTROL_PATH_ERR_FILT_HZ
+ # define  POSCONTROL_PATH_ERR_FILT_HZ      10.0f
+#endif
+
 class AC_PosControl
 {
 public:
@@ -208,6 +225,13 @@ public:
     /// set_pos_target in cm from home
     void set_pos_target(const Vector3f& position);
 
+    // DAVE EDIT:
+    /// set_path_track_origin in cm from home
+    void set_path_track_origin(const Vector3f& position) { _path_track_origin = position; }
+
+    /// set_path_track_destination in cm from home
+    void set_path_track_destination(const Vector3f& position) { _path_track_destination = position; }
+
     /// set_xy_target in cm from home
     void set_xy_target(float x, float y);
 
@@ -355,6 +379,9 @@ private:
     /// calc_leash_length - calculates the horizontal leash length given a maximum speed, acceleration and position kP gain
     float calc_leash_length(float speed_cms, float accel_cms, float kP) const;
 
+    // DAVE EDIT: track_err_to_rate - calculates track error for path following
+    void track_err_to_rate(float linear_distance);
+
     // references to inertial nav and ahrs libraries
     const AP_AHRS&              _ahrs;
     const AP_InertialNav&       _inav;
@@ -370,6 +397,13 @@ private:
 
     // parameters
     AP_Float    _accel_xy_filt_hz;      // XY acceleration filter cutoff frequency
+       // DAVE EDIT: add variables for path tracking
+    AP_Int8     _path_tracking_enabled;
+    AC_PID      _pid_track_err;
+    Vector3f    _path_track_origin;
+    Vector3f    _path_track_destination;
+    AP_Float    _path_error_lim;
+    AP_Float    _path_vel_target_lim;
 
     // internal variables
     float       _dt;                    // time difference (in seconds) between calls from the main program

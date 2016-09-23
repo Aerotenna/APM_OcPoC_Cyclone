@@ -134,21 +134,21 @@ const AP_Param::GroupInfo AC_AttitudeControl_Multi::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("THR_MIX_MAX", 5, AC_AttitudeControl_Multi, _thr_mix_max, AC_ATTITUDE_CONTROL_MAX_DEFAULT),
 
-	// @Param: STB_PIT_kP
+	// @Param: STB_PIT_P
     // @DisplayName: Stabilize Pitch axis controller P gain
     // @Description: Pitch axis controller P gain.  Converts the difference between desired pitch and actual pitch into a pitch rate output
     // @Range: 0.0 12.0
     // @Increment: 0.1
     // @User: Standard
 
-    // @Param: STB_PIT_kI
+    // @Param: STB_PIT_I
     // @DisplayName: Stabilize Pitch axis controller I gain
     // @Description: Stabilize Pitch axis controller I gain.  Corrects long-term difference in desired pitch vs actual pitch
     // @Range: 0.0 5.0
     // @Increment: 0.01
     // @User: Standard
 
-    // @Param: STB_PIT_IMX
+    // @Param: STB_PIT_IMAX
     // @DisplayName: Stabilize Pitch axis controller I gain maximum
     // @Description: Stabilize Pitch axis controller I gain maximum.  Constrains the maximum rate output that the I gain will output
     // @Range: 0 1
@@ -156,14 +156,14 @@ const AP_Param::GroupInfo AC_AttitudeControl_Multi::var_info[] = {
     // @Units: Percent
     // @User: Standard
 
-    // @Param: STB_PIT_kD
+    // @Param: STB_PIT_D
     // @DisplayName: Stabilize Pitch axis controller D gain
     // @Description: Stabilize Pitch axis controller D gain.  Compensates for short-term change in desired pitch vs actual pitch
     // @Range: 0.0 5.0
     // @Increment: 0.001
     // @User: Standard
 
-    // @Param: STB_PIT_FLT
+    // @Param: STB_PIT_FILT
     // @DisplayName: Stabilize Pitch axis conroller input frequency in Hz
     // @Description: Stabilize Pitch axis conroller input frequency in Hz
     // @Range: 1 100
@@ -171,21 +171,21 @@ const AP_Param::GroupInfo AC_AttitudeControl_Multi::var_info[] = {
     // @Units: Hz
     AP_SUBGROUPINFO(_pid_angle_pitch, "STB_PIT_", 6, AC_AttitudeControl_Multi, AC_PID),
 
-	// @Param: STB_RLL_kP
+	// @Param: STB_RLL_P
     // @DisplayName: Stabilize Roll axis controller P gain
     // @Description: Stabilize Roll axis controller P gain.  Converts the difference between desired roll and actual roll into a rate output
     // @Range: 0.0 12.0
     // @Increment: 0.1
     // @User: Standard
 
-    // @Param: STB_RLL_kI
+    // @Param: STB_RLL_I
     // @DisplayName: Stabilize Roll axis controller I gain
     // @Description: Stabilize Roll axis controller I gain.  Corrects long-term difference in desired roll vs actual roll
     // @Range: 0.0 5.0
     // @Increment: 0.01
     // @User: Standard
 
-    // @Param: STB_RLL_IMX
+    // @Param: STB_RLL_IMAX
     // @DisplayName: Stabilize Roll axis controller I gain maximum
     // @Description: Stabilize Roll axis controller I gain maximum.  Constrains the maximum rate output that the I gain will output
     // @Range: 0 1
@@ -193,14 +193,14 @@ const AP_Param::GroupInfo AC_AttitudeControl_Multi::var_info[] = {
     // @Units: Percent
     // @User: Standard
 
-    // @Param: STB_RLL_kD
+    // @Param: STB_RLL_D
     // @DisplayName: Stabilize Roll axis controller D gain
     // @Description: Stabilize Roll axis controller D gain.  Compensates for short-term change in desired roll vs actual roll
     // @Range: 0.0 5.0
     // @Increment: 0.001
     // @User: Standard
 
-    // @Param: STB_RLL_FLT
+    // @Param: STB_RLL_FILT
     // @DisplayName: Stabilize Roll axis conroller input frequency in Hz
     // @Description: Stabilize Roll axis conroller input frequency in Hz
     // @Range: 1 100
