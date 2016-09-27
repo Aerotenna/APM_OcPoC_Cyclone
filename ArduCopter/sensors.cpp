@@ -81,6 +81,17 @@ bool Copter::rangefinder_alt_ok()
     return (rangefinder_state.enabled && rangefinder_state.alt_healthy);
 }
 
+
+void Copter::init_usharp()
+{
+	usharp.init();
+
+}
+void Copter::read_usharp()
+{
+	usharp.update();
+}
+
 /*
   update RPM sensors
  */

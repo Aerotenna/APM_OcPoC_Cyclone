@@ -88,7 +88,7 @@
 #include <AC_InputManager/AC_InputManager.h>        // Pilot input handling library
 #include <AC_InputManager/AC_InputManager_Heli.h>   // Heli specific pilot input handling library
 #include <AP_Button/AP_Button.h>
-
+#include <AP_uSharp/uSharp.h>
 // DAVE EDIT: include the avoid_uLanding header file
 #include <AC_Avoidance/AC_Avoid_uLanding.h>
 
@@ -199,6 +199,8 @@ private:
         LowPassFilterFloat alt_cm_filt; // altitude filter
     } rangefinder_state = { false, false, 0, 0 };
 
+    uSharp      usharp      {serial_manager};
+
     AP_RPM rpm_sensor;
 
     // Inertial Navigation EKF
@@ -229,6 +231,7 @@ private:
 
     // GCS selection
     AP_SerialManager serial_manager;
+
     static const uint8_t num_gcs = MAVLINK_COMM_NUM_BUFFERS;
 
     GCS_MAVLINK_Copter gcs[MAVLINK_COMM_NUM_BUFFERS];
@@ -1028,6 +1031,10 @@ private:
     void read_barometer(void);
     void init_rangefinder(void);
     void read_rangefinder(void);
+
+    void init_usharp(void);
+    void read_usharp(void);
+
     bool rangefinder_alt_ok();
     void init_compass();
     void init_optflow();
