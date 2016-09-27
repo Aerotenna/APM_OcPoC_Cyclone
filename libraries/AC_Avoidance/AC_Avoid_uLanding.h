@@ -38,10 +38,10 @@ public:
 
     // stabilize_avoid - returns new pitch command in centi-degrees to avoid obstacle
     void stabilize_avoid(float &pitch_cmd);
-/*
+
     // loiter_avoid - returns new velocity commands in cm/s to avoid obstacle
-    void loiter_avoid(void); 
-*/
+    void loiter_avoid(float pitch_in, float &pitch_out); 
+
     static const struct AP_Param::GroupInfo var_info[];
 
 private:
@@ -49,12 +49,16 @@ private:
     // obstacle_detect - read uLanding and determine if obstacle is present and needs to be avoided
     bool obstacle_detect(float dist);
 
+    // update_buffer - update buffer distance based on user parameters
+    void update_buffer(float dist, float buffer) { _buffer = dist + buffer;}
+
     // external references
     const AP_Motors&    _motors;
     const RangeFinder&  _range;
 
     // PID controllers
     AC_PID      _pid_stab_avoid;
+
 
     // parameters
     AP_Int8     _uLanding_avoid_enable;
@@ -66,5 +70,6 @@ private:
     // internal variables
     bool    _avoid;
     bool    _avoid_prev;
+    float   _buffer;
     float   _dt;
 };

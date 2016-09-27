@@ -411,6 +411,7 @@ void NOINLINE Copter::send_rangefinder(mavlink_channel_t chan)
             rangefinder.distance_cm() * 0.01f,
 //            rangefinder.voltage_mv() * 0.001f);
 			usharp.distance_cm() * 0.01f );
+
 }
 #endif
 

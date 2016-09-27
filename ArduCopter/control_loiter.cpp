@@ -158,12 +158,32 @@ void Copter::loiter_run()
         // set motors to full range
         motors.set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
 
-        // run loiter controller
-        wp_nav.update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
+        // DAVE EDIT: Call Avoid_uLanding monitor
+        if (avoid_uLanding.monitor()) {
+            float tmp_avoid_pitch = 0.0f;
+            // if uLanding detects obstacle to avoid, run the pitch_cmd controller
+            avoid_uLanding.loiter_avoid(channel_pitch->get_control_in(), tmp_avoid_pitch);
 
-        // call attitude controller
-        attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate, get_smoothing_gain());
+            if (!failsafe.radio) {
+                // only process pilot's roll input if we're avoiding a forward/backward facing obstacle
+                wp_nav.set_pilot_desired_acceleration(channel_roll->get_control_in(), tmp_avoid_pitch);
+            }else{
+                wp_nav.set_pilot_desired_acceleration(0.0f, tmp_avoid_pitch);
+            }
 
+            // run loiter controller
+            wp_nav.update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
+
+            // call attitude controller
+            attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav.get_roll(), tmp_avoid_pitch, target_yaw_rate, get_smoothing_gain());
+        }else{
+
+            // run loiter controller
+            wp_nav.update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
+
+            // call attitude controller
+            attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate, get_smoothing_gain());
+        }
         // adjust climb rate using rangefinder
         if (rangefinder_alt_ok()) {
             // if rangefinder is ok, use surface tracking

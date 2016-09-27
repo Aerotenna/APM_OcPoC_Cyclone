@@ -1106,6 +1106,7 @@ void AC_PosControl::track_err_to_rate(float linear_distance)
 
     // calculate track error from current position perpendicular to flight path
     TrackErr = distToDest * sin(coursePath - courseToDest);
+
     // limit track error
     TrackErr = constrain_float(TrackErr, -_path_error_lim, _path_error_lim);
 
