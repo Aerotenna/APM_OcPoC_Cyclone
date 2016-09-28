@@ -83,9 +83,9 @@ const AP_Param::GroupInfo AC_Avoid_uLanding::var_info[] = {
 };
 
 /// Constructor
-AC_Avoid_uLanding::AC_Avoid_uLanding(const AP_Motors& motors, const RangeFinder& range, float dt)
+AC_Avoid_uLanding::AC_Avoid_uLanding(const AP_Motors& motors, const uSharp& usharp, float dt)
 	: _motors(motors),
-	  _range(range),
+	  _usharp(usharp),
 	  _dt(dt),
 	  _pid_stab_avoid(ULAND_STB_kP, ULAND_STB_kI, ULAND_STB_kD, ULAND_STB_IMAX, ULAND_STB_FILT_HZ, dt)
 {
@@ -105,7 +105,7 @@ bool AC_Avoid_uLanding::monitor(void)
 		return false;
 	}else{
         update_buffer(_uLanding_avoid_dist, _uLanding_avoid_dist_buffer);
-        return obstacle_detect(_range.distance_cm(1));
+        return obstacle_detect(_usharp.distance_cm());
 	}
 }
 
@@ -120,13 +120,13 @@ void AC_Avoid_uLanding::stabilize_avoid(float &pitch_cmd)
 	// determine if pilot is commanding pitch to back away from obstacle
 	bool pilot_cmd_avoidance = pitch_cmd < -500.0; // includes dead-zone of 5 degrees
 
-	if (pilot_cmd_avoidance || (_range.distance_cm(1) > _buffer)) {
+	if (pilot_cmd_avoidance || (_usharp.distance_cm() > _buffer)) {
 		// allow pilot to maintain pitch command if actively avoiding obstacle
 		pitch_cmd = pitch_cmd;
 	}else{
 
 	    // calcualate distance error
-	    float err = _uLanding_avoid_dist - _range.distance_cm(1);
+	    float err = _uLanding_avoid_dist - _usharp.distance_cm();
 	    err = -err;
 
 	    // pass error to the PID controller for avoidance distance
@@ -140,7 +140,7 @@ void AC_Avoid_uLanding::stabilize_avoid(float &pitch_cmd)
 	}
 
 	// set previous avoid state for next step through the monitor
-	if (_range.distance_cm(1) > _buffer) {
+	if (_usharp.distance_cm() > _buffer) {
 			_avoid = false;
 	}
 
@@ -160,13 +160,13 @@ void AC_Avoid_uLanding::loiter_avoid(float pitch_in, float &pitch_out)
     // determine if pilot is commanding pitch to back away from obstacle
 	bool pilot_cmd_avoidance = pitch_in < -500.0; // includes dead-zone of 5 degrees
 
-	if (pilot_cmd_avoidance || (_range.distance_cm(1) > _buffer)) {
+	if (pilot_cmd_avoidance || (_usharp.distance_cm() > _buffer)) {
 		// allow pilot to maintain pitch command if actively avoiding obstacle
 		pitch_out = pitch_in;
     }else{
 
         // calcualate distance error
-	    float err = _uLanding_avoid_dist - _range.distance_cm(1);
+	    float err = _uLanding_avoid_dist - _usharp.distance_cm();
 	    err = -err;
 
         // pass error to the PID controller for avoidance distance
@@ -180,7 +180,7 @@ void AC_Avoid_uLanding::loiter_avoid(float pitch_in, float &pitch_out)
     }
 
 	// set previous avoid state for next step through the monitor
-	if (_range.distance_cm(1) > _buffer) {
+	if (_usharp.distance_cm() > _buffer) {
 			_avoid = false;
 	}
 
@@ -189,7 +189,7 @@ void AC_Avoid_uLanding::loiter_avoid(float pitch_in, float &pitch_out)
 
 // obstacle_detect - read uLanding and determine if obstacle is present and needs to be avoided
 // 			dist is read in cm
-bool AC_Avoid_uLanding::obstacle_detect(float dist)
+bool AC_Avoid_uLanding::obstacle_detect(uint16_t dist)
 {
 	bool uLanding_valid = dist > _uLanding_avoid_dist_valid; // valid distance in cm
 

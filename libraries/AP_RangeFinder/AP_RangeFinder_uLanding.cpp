@@ -85,7 +85,7 @@ bool AP_RangeFinder_uLanding::get_reading(uint16_t &reading_cm)
         return false;
     }
     //reading_cm = 4.5 * sum / count;
-    reading_cm = 2.25 * sum / count;
+    reading_cm = 2.5 * sum / count;
     return true;
 }
 

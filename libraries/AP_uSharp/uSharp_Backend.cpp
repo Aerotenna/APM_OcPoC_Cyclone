@@ -75,7 +75,8 @@ bool uSharp_Backend::get_reading(uint16_t &reading_cm)
     if (count == 0) {
         return false;
     }
-    reading_cm = 4.5 * sum / count;
+    //reading_cm = 4.5 * sum / count;
+    reading_cm = 2.5 * sum / count;
     return true;
 }
 

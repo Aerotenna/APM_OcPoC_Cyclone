@@ -39,7 +39,7 @@ public:
 
     void detect_instance();
 
-    uint16_t distance_cm() {
+    uint16_t distance_cm() const {
         return state.distance_cm_primary;
     }
 

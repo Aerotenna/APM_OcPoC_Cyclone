@@ -7,10 +7,9 @@
 #include <AP_Common/AP_Common.h>
 #include <AP_Param/AP_Param.h>
 #include <AP_Math/AP_Math.h>
-//#include <AP_AHRS/AP_AHRS.h>
 #include <AP_Motors/AP_Motors.h>
 #include <AC_PID/AC_PID.h>
-#include <AP_RangeFinder/AP_RangeFinder.h>
+#include <AP_uSharp/uSharp.h>
 
 #define ULANDING_ENABLE_DEFAULT 0
 #define ULANDING_AVOID_DIST_DEFAULT      250.0f // cm
@@ -31,7 +30,7 @@ class AC_Avoid_uLanding {
 public:
 
     /// Constructor
-    AC_Avoid_uLanding(const AP_Motors& motors, const RangeFinder& range, float dt);
+    AC_Avoid_uLanding(const AP_Motors& motors, const uSharp& usharp, float dt);
 
     // monitor - monitor whether or not to avoid an obstacle
     bool monitor(void);
@@ -47,14 +46,14 @@ public:
 private:
 
     // obstacle_detect - read uLanding and determine if obstacle is present and needs to be avoided
-    bool obstacle_detect(float dist);
+    bool obstacle_detect(uint16_t dist);
 
     // update_buffer - update buffer distance based on user parameters
     void update_buffer(float dist, float buffer) { _buffer = dist + buffer;}
 
     // external references
     const AP_Motors&    _motors;
-    const RangeFinder&  _range;
+    const uSharp&  _usharp;
 
     // PID controllers
     AC_PID      _pid_stab_avoid;
