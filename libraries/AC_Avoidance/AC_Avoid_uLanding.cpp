@@ -9,13 +9,20 @@ const AP_Param::GroupInfo AC_Avoid_uLanding::var_info[] = {
     // @User: Standard
 	AP_GROUPINFO("ENABLE",1, AC_Avoid_uLanding, _uLanding_avoid_enable, ULANDING_ENABLE_DEFAULT),
 
+    // @Param: DIRECTION
+	// @DisplayName: uLanding Avoidance direction
+    // @Description: uLanding sensor looking forward or backward?
+    // @Values: 0: Backward, 1: Forward
+    // @User: Standard
+	AP_GROUPINFO("DIRECTION",2, AC_Avoid_uLanding, _uLanding_looking_fwd, ULANDING_LOOKING_FWD),
+
 	// @Param: DIST
 	// @DisplayName: uLanding Avoidance standoff distance
     // @Description: uLanding distance to maintain from obstacle
 	// @Units: cm
     // @Values: 0 1000.0
     // @User: Standard
-	AP_GROUPINFO("DIST",2, AC_Avoid_uLanding, _uLanding_avoid_dist, ULANDING_AVOID_DIST_DEFAULT),
+	AP_GROUPINFO("DIST",3, AC_Avoid_uLanding, _uLanding_avoid_dist, ULANDING_AVOID_DIST_DEFAULT),
 
 	// @Param: DIST_BUFF
 	// @DisplayName: uLanding Avoidance buffer distance
@@ -23,7 +30,7 @@ const AP_Param::GroupInfo AC_Avoid_uLanding::var_info[] = {
 	// @Units: cm
     // @Values: 0 1000.0
     // @User: Standard
-	AP_GROUPINFO("DIST_BUFF",3, AC_Avoid_uLanding, _uLanding_avoid_dist_buffer, ULANDING_AVOID_DIST_BUFF_DEFAULT),
+	AP_GROUPINFO("DIST_BUFF",4, AC_Avoid_uLanding, _uLanding_avoid_dist_buffer, ULANDING_AVOID_DIST_BUFF_DEFAULT),
 
 	// @Param: RNG_VALID
 	// @DisplayName: uLanding Avoidance valid distance
@@ -31,7 +38,7 @@ const AP_Param::GroupInfo AC_Avoid_uLanding::var_info[] = {
 	// @Units: cm
     // @Values: 31.0 100.0
     // @User: Standard
-	AP_GROUPINFO("RNG_VALID",4, AC_Avoid_uLanding, _uLanding_avoid_dist_valid, ULANDING_AVOID_DIST_VALID_DEFAULT),
+	AP_GROUPINFO("RNG_VALID",5, AC_Avoid_uLanding, _uLanding_avoid_dist_valid, ULANDING_AVOID_DIST_VALID_DEFAULT),
 
 	// @Param: PIT_LIM
 	// @DisplayName: uLanding Avoidance pitch limit
@@ -39,7 +46,7 @@ const AP_Param::GroupInfo AC_Avoid_uLanding::var_info[] = {
 	// @Units: centi-degrees
     // @Values: 1000.0 4500.0 
     // @User: Standard
-	AP_GROUPINFO("PIT_LIM",5, AC_Avoid_uLanding, _uLanding_avoid_pitch_lim, ULANDING_PITCH_LIMIT),
+	AP_GROUPINFO("PIT_LIM",6, AC_Avoid_uLanding, _uLanding_avoid_pitch_lim, ULANDING_PITCH_LIMIT),
 
     // @Param: PIT_P
     // @DisplayName: Track Error controller P gain
@@ -76,7 +83,7 @@ const AP_Param::GroupInfo AC_Avoid_uLanding::var_info[] = {
     // @Range: 1 100
     // @Increment: 1
     // @Units: Hz
-    AP_SUBGROUPINFO(_pid_stab_avoid, "PIT_", 6, AC_Avoid_uLanding, AC_PID),
+    AP_SUBGROUPINFO(_pid_stab_avoid, "PIT_", 7, AC_Avoid_uLanding, AC_PID),
 
 
 	AP_GROUPEND
@@ -117,8 +124,14 @@ void AC_Avoid_uLanding::stabilize_avoid(float &pitch_cmd)
 		_pid_stab_avoid.reset_I();
 	}
 
-	// determine if pilot is commanding pitch to back away from obstacle
-	bool pilot_cmd_avoidance = pitch_cmd < -500.0; // includes dead-zone of 5 degrees
+    // determine if pilot is commanding pitch to back away from obstacle
+    //  - includes a dead-zone of 5 degrees
+    bool pilot_cmd_avoidance;
+    if (_uLanding_looking_fwd) {
+    	pilot_cmd_avoidance = pitch_cmd > 500.0;
+    }else{
+        pilot_cmd_avoidance = pitch_cmd < -500.0;
+    }
 
 	if (pilot_cmd_avoidance || (_usharp.distance_cm() > _buffer)) {
 		// allow pilot to maintain pitch command if actively avoiding obstacle
@@ -127,7 +140,11 @@ void AC_Avoid_uLanding::stabilize_avoid(float &pitch_cmd)
 
 	    // calcualate distance error
 	    float err = _uLanding_avoid_dist - _usharp.distance_cm();
-	    err = -err;
+	    
+        if (!_uLanding_looking_fwd) {
+            // if the uLanding sensor is looking backward, flip sign of the error to produce opposite pitch cmd
+            err = -err;
+        }
 
 	    // pass error to the PID controller for avoidance distance
 	    _pid_stab_avoid.set_input_filter_d(err);
@@ -158,7 +175,13 @@ void AC_Avoid_uLanding::loiter_avoid(float pitch_in, float &pitch_out)
 	}
 
     // determine if pilot is commanding pitch to back away from obstacle
-	bool pilot_cmd_avoidance = pitch_in < -500.0; // includes dead-zone of 5 degrees
+    //  - includes a dead-zone of 5 degrees
+    bool pilot_cmd_avoidance;
+    if (_uLanding_looking_fwd) {
+    	pilot_cmd_avoidance = pitch_in > 500.0;
+    }else{
+        pilot_cmd_avoidance = pitch_in < -500.0;
+    }
 
 	if (pilot_cmd_avoidance || (_usharp.distance_cm() > _buffer)) {
 		// allow pilot to maintain pitch command if actively avoiding obstacle
@@ -167,7 +190,11 @@ void AC_Avoid_uLanding::loiter_avoid(float pitch_in, float &pitch_out)
 
         // calcualate distance error
 	    float err = _uLanding_avoid_dist - _usharp.distance_cm();
-	    err = -err;
+
+        if (!_uLanding_looking_fwd) {
+            // if the uLanding sensor is looking backward, flip sign of the error to produce opposite pitch cmd
+            err = -err;
+        }
 
         // pass error to the PID controller for avoidance distance
 	    _pid_stab_avoid.set_input_filter_d(err);

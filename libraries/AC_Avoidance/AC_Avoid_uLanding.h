@@ -12,6 +12,7 @@
 #include <AP_uSharp/uSharp.h>
 
 #define ULANDING_ENABLE_DEFAULT 0
+#define ULANDING_LOOKING_FWD 1
 #define ULANDING_AVOID_DIST_DEFAULT      250.0f // cm
 #define ULANDING_AVOID_DIST_BUFF_DEFAULT  50.0f  // cm
 #define ULANDING_AVOID_DIST_VALID_DEFAULT 75.0f  // cm
@@ -61,6 +62,7 @@ private:
 
     // parameters
     AP_Int8     _uLanding_avoid_enable;
+    AP_Int8     _uLanding_looking_fwd;
     AP_Float    _uLanding_avoid_dist;
     AP_Float    _uLanding_avoid_dist_buffer;
     AP_Float    _uLanding_avoid_dist_valid;
