@@ -138,7 +138,7 @@ void Copter::althold_run()
         if (avoid_uLanding.monitor()) {
             // if uLanding detects obstacle to avoid, run the pitch_cmd controller
             avoid_uLanding.stabilize_avoid(target_pitch);
-        }        
+        }
 
         // call attitude controller
         attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate, get_smoothing_gain());
