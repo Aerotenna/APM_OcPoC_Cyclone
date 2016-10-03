@@ -164,13 +164,6 @@ void Copter::loiter_run()
             // if uLanding detects obstacle to avoid, run the pitch_cmd controller
             avoid_uLanding.loiter_avoid(channel_pitch->get_control_in(), tmp_avoid_pitch);
 
-            if (!failsafe.radio) {
-                // only process pilot's roll input if we're avoiding a forward/backward facing obstacle
-                wp_nav.set_pilot_desired_acceleration(channel_roll->get_control_in(), tmp_avoid_pitch);
-            }else{
-                wp_nav.set_pilot_desired_acceleration(0.0f, tmp_avoid_pitch);
-            }
-
             // run loiter controller
             wp_nav.update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
 

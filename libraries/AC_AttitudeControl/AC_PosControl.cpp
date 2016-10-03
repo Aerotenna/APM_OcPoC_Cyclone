@@ -1096,22 +1096,22 @@ void AC_PosControl::track_err_to_rate(float linear_distance)
     distToDest = norm((_path_track_destination.y - curr_pos.y),(_path_track_destination.x - curr_pos.x));
 
     // calculate course to destination
-    courseToDest = atan2((_path_track_destination.y - curr_pos.y),(_path_track_destination.x - curr_pos.x));
+    courseToDest = atan2f((_path_track_destination.y - curr_pos.y),(_path_track_destination.x - curr_pos.x));
 
     // calculate distance of flight path from previous to next waypoint
     //distPath = norm((_path_track_destination.y - _path_track_origin.y),(_path_track_destination.x - _path_track_origin.x));
 
     // calculate course of flight path from previous to next waypoint
-    coursePath = atan2((_path_track_destination.y - _path_track_origin.y),(_path_track_destination.x - _path_track_origin.x));
+    coursePath = atan2f((_path_track_destination.y - _path_track_origin.y),(_path_track_destination.x - _path_track_origin.x));
 
     // calculate track error from current position perpendicular to flight path
-    TrackErr = distToDest * sin(coursePath - courseToDest);
+    TrackErr = distToDest * sinf(coursePath - courseToDest);
 
     // limit track error
     TrackErr = constrain_float(TrackErr, -_path_error_lim, _path_error_lim);
 
     // calculate distance to target waypoint (along the flight path)
-    DistErr = distToDest * cos(coursePath - courseToDest);
+    DistErr = distToDest * cosf(coursePath - courseToDest);
 
     // PID Controller for Track Error
     // pass track error to PID controller
