@@ -86,7 +86,7 @@ void AP_Baro_MS56XX::_init()
 
     uint16_t prom[8];
     if (!_read_prom(prom)) {
-        AP_HAL::panic("Can't read PROM");
+        //AP_HAL::panic("Can't read PROM");
     }
 
     // Save factory calibration coefficients

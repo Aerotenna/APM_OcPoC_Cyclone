@@ -21,6 +21,7 @@
 
 extern const AP_HAL::HAL& hal;
 
+
 uSharp_Backend::uSharp_Backend(uSharp &_usharp, uSharp::uSharp_State &_state,
 									AP_SerialManager &serial_manager):
 state(_state),
@@ -39,15 +40,15 @@ bool uSharp_Backend::detect(AP_SerialManager &serial_manager)
 }
 
 // read - return last value measured by sensor
-bool uSharp_Backend::get_reading(uint16_t &reading_cm)
+bool uSharp_Backend::get_reading(uSharp::uSharp_State &state_ref)
 {
     if (uart == nullptr) {
         return false;
     }
 
     // read any available lines from the uLanding
-    float sum = 0;
-    uint16_t count = 0;
+    float sum[4] = {0,};
+    uint16_t count[4] = {0,};
     uint8_t  index = 0;
 
     int16_t nbytes = uart->available();
@@ -62,21 +63,49 @@ bool uSharp_Backend::get_reading(uint16_t &reading_cm)
         if ( index == 1 ){
         	linebuf[linebuf_len] = c;
         	linebuf_len ++;
-        	if ( linebuf_len == 3 ){
+        	if ( linebuf_len == 4 ){
         		index = 0;
-        		sum += ( linebuf[2]&0x7F ) *128 + ( linebuf[1]&0x7F );
+        		switch(linebuf[1]){
+        		case 252:
+        			sum[3] += ( linebuf[3]&0x7F ) *128 + ( linebuf[2]&0x7F );
+        			count[3]++;
+        			break;
+        		case 253:
+        			sum[0] += ( linebuf[3]&0x7F ) *128 + ( linebuf[2]&0x7F );
+        			count[0]++;
+        			break;
+        		case 254:
+        			sum[1] += ( linebuf[3]&0x7F ) *128 + ( linebuf[2]&0x7F );
+        			count[1]++;
+        			break;
+        		default:
+        			sum[2] += ( linebuf[3]&0x7F ) *128 + ( linebuf[2]&0x7F );
+        			count[2]++;
+        		}
+
         		linebuf_len = 0;
-        		count ++;
         	}
         }
 
     }
 
-    if (count == 0) {
+    if ( count[0] == 0 && count[1] == 0 && count[2] == 0 && count[3] == 0 ) {
         return false;
     }
-    //reading_cm = 4.5 * sum / count;
-    reading_cm = 2.5 * sum / count;
+    if ( count[0] != 0 ){
+    	state_ref.distance[0] = 2.5 * sum[0] / count[0];
+    }
+    if ( count[1] != 0) {
+    	state_ref.distance[1] = 2.5 * sum[1] / count[1];
+    }
+    if ( count[2] != 0) {
+    	state_ref.distance[2] = 2.5 * sum[2] / count[2];
+    }
+    if ( count[3] != 0) {
+    	state_ref.distance[3] = 2.5 * sum[3] / count[3];
+    }
+
+
     return true;
 }
 
@@ -85,5 +114,5 @@ bool uSharp_Backend::get_reading(uint16_t &reading_cm)
 */
 void uSharp_Backend::update(void)
 {
-	get_reading(state.distance_cm_primary);
+	get_reading(state);
 }

@@ -19,7 +19,7 @@ public:
 
 private:
     // get a reading
-    bool get_reading(uint16_t &reading_cm);
+    bool get_reading(uSharp::uSharp_State &state_ref);
 
     AP_HAL::UARTDriver *uart = nullptr;
     uint32_t last_reading_ms = 0;

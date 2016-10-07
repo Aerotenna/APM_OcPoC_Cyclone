@@ -40,11 +40,14 @@ public:
     void detect_instance();
 
     uint16_t distance_cm() const {
-        return state.distance_cm_primary;
+        return state.distance[0];
+    }
+    uint16_t distance_cm(uint8_t instance) const {
+        return state.distance[instance];
     }
 
     struct uSharp_State{
-    	uint16_t distance_cm_primary;
+    	uint16_t distance[4];
     };
 
 private:
@@ -53,7 +56,7 @@ private:
 
     AP_SerialManager &serial_manager;
 
-    uint16_t         distance_cm_primary;
+    uint16_t         distance;
 
     uSharp_State     state;
 
