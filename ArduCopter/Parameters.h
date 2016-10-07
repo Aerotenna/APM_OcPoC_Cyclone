@@ -372,6 +372,7 @@ public:
 
         // DAVE EDIT: add parameter for avoidance_uLanding object
         k_param_avoid_uLanding = 258,  // avoid_uLanding object
+        k_param_avoid_uSharp   = 259,  // avoid_uSharp object
 
         // the k_param_* space is 9-bits in size
         // 511: reserved

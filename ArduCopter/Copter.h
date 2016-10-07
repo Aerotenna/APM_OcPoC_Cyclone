@@ -91,6 +91,7 @@
 #include <AP_uSharp/uSharp.h>
 // DAVE EDIT: include the avoid_uLanding header file
 #include <AC_Avoidance/AC_Avoid_uLanding.h>
+#include <AC_Avoidance/AC_Avoid_uSharp.h>
 
 // Configuration
 #include "defines.h"
@@ -516,6 +517,7 @@ private:
 
     // DAVE EDIT: Obstacle Avoidance via uLanding object
     AC_Avoid_uLanding avoid_uLanding;
+    AC_Avoid_uSharp   avoid_uSharp;
 
     // Performance monitoring
     int16_t pmTest1;

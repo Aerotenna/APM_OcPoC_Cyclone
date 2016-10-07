@@ -10,9 +10,12 @@
 #include <AP_Motors/AP_Motors.h>
 #include <AC_PID/AC_PID.h>
 #include <AP_uSharp/uSharp.h>
+#include <AP_InertialNav/AP_InertialNav.h>     // Inertial Navigation library
+#include <AC_AttitudeControl/AC_PosControl.h>      // Position control library
 
 #define ULANDING_ENABLE_DEFAULT 0
 #define ULANDING_LOOKING_FWD 1
+#define NUM_USHARP_PANELS 4
 #define ULANDING_AVOID_DIST_DEFAULT      250.0f // cm
 #define ULANDING_AVOID_DIST_BUFF_DEFAULT  50.0f  // cm
 #define ULANDING_AVOID_DIST_VALID_DEFAULT 75.0f  // cm
@@ -31,7 +34,7 @@ class AC_Avoid_uLanding {
 public:
 
     /// Constructor
-    AC_Avoid_uLanding(const AP_Motors& motors, const uSharp& usharp, float dt);
+    AC_Avoid_uLanding(const AP_Motors& motors, const uSharp& usharp, const AP_InertialNav& inav, const AP_AHRS& ahrs, AC_PosControl& pos_control, float dt);
 
     // monitor - monitor whether or not to avoid an obstacle
     bool monitor(void);
@@ -46,6 +49,11 @@ public:
 
 private:
 
+    // update_loiter_target - move the target position in loiter mode to maintain 
+    //                        body y-axis position/velocity command, but align 
+    //                        body x-axis target position with current position
+    void update_loiter_target(void);
+
     // obstacle_detect - read uLanding and determine if obstacle is present and needs to be avoided
     bool obstacle_detect(uint16_t dist);
 
@@ -53,8 +61,11 @@ private:
     void update_buffer(float dist, float buffer) { _buffer = dist + buffer;}
 
     // external references
-    const AP_Motors&    _motors;
-    const uSharp&  _usharp;
+    const AP_Motors&        _motors;
+    const uSharp&           _usharp;
+    const AP_InertialNav&   _inav;
+    const AP_AHRS&          _ahrs;
+    AC_PosControl&          _pos_control;
 
     // PID controllers
     AC_PID      _pid_stab_avoid;
@@ -73,4 +84,5 @@ private:
     bool    _avoid_prev;
     float   _buffer;
     float   _dt;
+    int     _usharp_panel_instance = 0;
 };

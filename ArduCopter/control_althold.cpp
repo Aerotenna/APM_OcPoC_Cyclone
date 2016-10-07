@@ -136,8 +136,14 @@ void Copter::althold_run()
 
         // DAVE EDIT: Call Avoid_uLanding monitor
         if (avoid_uLanding.monitor()) {
+
             // if uLanding detects obstacle to avoid, run the pitch_cmd controller
             avoid_uLanding.stabilize_avoid(target_pitch);
+
+        }else if (avoid_uSharp.monitor()) {
+
+            // if uSharp detects any obstacle(s) to avoid, run the avoidance controller
+            avoid_uSharp.stabilize_avoid(target_pitch, target_roll, attitude_control.get_althold_lean_angle_max());
         }
 
         // call attitude controller

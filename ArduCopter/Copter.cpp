@@ -80,7 +80,10 @@ Copter::Copter(void) :
     wp_nav(inertial_nav, ahrs, pos_control, attitude_control),
     circle_nav(inertial_nav, ahrs, pos_control),
     // DAVE EDIT: init Obstacle Avoidance via uLanding object
-    avoid_uLanding(motors, usharp, MAIN_LOOP_SECONDS),
+    avoid_uLanding(motors, usharp, inertial_nav, ahrs, 
+                   pos_control, MAIN_LOOP_SECONDS),
+    avoid_uSharp(motors, usharp, inertial_nav, ahrs, 
+                   pos_control, MAIN_LOOP_SECONDS),
     pmTest1(0),
     fast_loopTimer(0),
     mainLoop_count(0),

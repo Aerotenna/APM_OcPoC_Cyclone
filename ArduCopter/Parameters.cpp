@@ -959,6 +959,10 @@ const AP_Param::Info Copter::var_info[] = {
     // @Path: ../libraries/AC_Avoidance/AC_Avoid_uLanding.cpp
     GOBJECT(avoid_uLanding,      "UL_AVD_",   AC_Avoid_uLanding),
 
+    // @Group: US_AVD_
+    // @Path: ../libraries/AC_Avoidance/AC_Avoid_uSharp.cpp
+    GOBJECT(avoid_uSharp,      "US_AVD_",   AC_Avoid_uSharp),
+
     AP_VAREND
 };
 

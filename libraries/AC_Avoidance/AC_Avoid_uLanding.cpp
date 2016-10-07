@@ -90,9 +90,12 @@ const AP_Param::GroupInfo AC_Avoid_uLanding::var_info[] = {
 };
 
 /// Constructor
-AC_Avoid_uLanding::AC_Avoid_uLanding(const AP_Motors& motors, const uSharp& usharp, float dt)
+AC_Avoid_uLanding::AC_Avoid_uLanding(const AP_Motors& motors, const uSharp& usharp, const AP_InertialNav& inav, const AP_AHRS& ahrs, AC_PosControl& pos_control, float dt)
     : _motors(motors),
       _usharp(usharp),
+      _inav(inav),
+      _ahrs(ahrs),
+      _pos_control(pos_control),
       _dt(dt),
       _pid_stab_avoid(ULAND_STB_kP, ULAND_STB_kI, ULAND_STB_kD, ULAND_STB_IMAX, ULAND_STB_FILT_HZ, dt)
 {
@@ -112,7 +115,8 @@ bool AC_Avoid_uLanding::monitor(void)
         return false;
     }else{
         update_buffer(_uLanding_avoid_dist, _uLanding_avoid_dist_buffer);
-        return obstacle_detect(_usharp.distance_cm());
+        _usharp_panel_instance = (_uLanding_looking_fwd ? 0 : (NUM_USHARP_PANELS/2));
+        return obstacle_detect(_usharp.distance_cm(_usharp_panel_instance));
     }
 }
 
@@ -128,18 +132,18 @@ void AC_Avoid_uLanding::stabilize_avoid(float &pitch_cmd)
     //  - includes a dead-zone of 5 degrees
     bool pilot_cmd_avoidance;
     if (_uLanding_looking_fwd) {
-    	pilot_cmd_avoidance = pitch_cmd > 500.0;
+    	pilot_cmd_avoidance = pitch_cmd > 250.0;
     }else{
-        pilot_cmd_avoidance = pitch_cmd < -500.0;
+        pilot_cmd_avoidance = pitch_cmd < -250.0;
     }
 
-    if (pilot_cmd_avoidance || (_usharp.distance_cm() > _buffer)) {
+    if (pilot_cmd_avoidance || (_usharp.distance_cm(_usharp_panel_instance) > _buffer)) {
         // allow pilot to maintain pitch command if actively avoiding obstacle
         pitch_cmd = pitch_cmd;
     }else{
 
         // calcualate distance error
-        float err = _uLanding_avoid_dist - _usharp.distance_cm();
+        float err = _uLanding_avoid_dist - _usharp.distance_cm(_usharp_panel_instance);
 
         if (!_uLanding_looking_fwd) {
             // if the uLanding sensor is looking backward, flip sign of the error to produce opposite pitch cmd
@@ -157,7 +161,7 @@ void AC_Avoid_uLanding::stabilize_avoid(float &pitch_cmd)
     }
 
     // set previous avoid state for next step through the monitor
-    if (_usharp.distance_cm() > _buffer) {
+    if (_usharp.distance_cm(_usharp_panel_instance) > _buffer) {
             _avoid = false;
     }
 
@@ -174,22 +178,26 @@ void AC_Avoid_uLanding::loiter_avoid(float pitch_in, float &pitch_out)
         _pid_stab_avoid.reset_I();
     }
 
+    // update target position for loiter mode, since we're actively
+    // avoiding an obstacle
+    update_loiter_target();
+
     // determine if pilot is commanding pitch to back away from obstacle
     //  - includes a dead-zone of 5 degrees
     bool pilot_cmd_avoidance;
     if (_uLanding_looking_fwd) {
-    	pilot_cmd_avoidance = pitch_in > 500.0;
+    	pilot_cmd_avoidance = pitch_in > 250.0;
     }else{
-        pilot_cmd_avoidance = pitch_in < -500.0;
+        pilot_cmd_avoidance = pitch_in < -250.0;
     }
 
-    if (pilot_cmd_avoidance || (_usharp.distance_cm() > _buffer)) {
+    if (pilot_cmd_avoidance || (_usharp.distance_cm(_usharp_panel_instance) > _buffer)) {
         // allow pilot to maintain pitch command if actively avoiding obstacle
         pitch_out = pitch_in;
     }else{
 
         // calcualate distance error
-        float err = _uLanding_avoid_dist - _usharp.distance_cm();
+        float err = _uLanding_avoid_dist - _usharp.distance_cm(_usharp_panel_instance);
 
         if (!_uLanding_looking_fwd) {
             // if the uLanding sensor is looking backward, flip sign of the error to produce opposite pitch cmd
@@ -207,11 +215,46 @@ void AC_Avoid_uLanding::loiter_avoid(float pitch_in, float &pitch_out)
     }
 
     // set previous avoid state for next step through the monitor
-    if (_usharp.distance_cm() > _buffer) {
+    if (_usharp.distance_cm(_usharp_panel_instance) > _buffer) {
             _avoid = false;
     }
 
     _avoid_prev = _avoid;
+}
+
+// update_loiter_target - move the target position in loiter mode to maintain body y-axis position/velocity command,
+//                      but align body x-axis target position with current position
+void AC_Avoid_uLanding::update_loiter_target(void)
+{
+    Vector3f curr_pos = _inav.get_position();
+    Vector3f pos_targ = _pos_control.get_pos_target();
+    float heading = wrap_180_cd(_ahrs.yaw_sensor);
+    float distToDest;
+    float courseToDest;
+    float distToMoveTarget;
+    Vector2f new_target;
+
+    // calculate distance to destination
+    distToDest = norm((pos_targ.y - curr_pos.y),(pos_targ.x - curr_pos.x));
+
+    // calculate course to destination
+    courseToDest = atan2f((pos_targ.y - curr_pos.y),(pos_targ.x - curr_pos.x));
+
+    // calculate the distance to move the target from the current position
+    distToMoveTarget = distToDest * sinf(courseToDest - heading);
+
+    // only move the target position if it is behind the obstacle we're avoiding
+    if ((_uLanding_looking_fwd && (abs(courseToDest - heading) < M_PI_2)) ||
+       (!_uLanding_looking_fwd && (abs(courseToDest - heading) > M_PI_2))) {
+
+        // calculate new target x/y position, 
+        // offset from current position in the body y-axis direction
+        new_target.x = curr_pos.x - distToMoveTarget * _ahrs.sin_yaw();//sinf(heading);
+        new_target.y = curr_pos.y + distToMoveTarget * _ahrs.cos_yaw();//cosf(heading);
+
+        // set new target position
+        _pos_control.set_xy_target(new_target.x, new_target.y);
+    }
 }
 
 // obstacle_detect - read uLanding and determine if obstacle is present and needs to be avoided

@@ -52,12 +52,13 @@ void Copter::stabilize_run()
     // get pilot's desired throttle
     pilot_throttle_scaled = get_pilot_desired_throttle(channel_throttle->get_control_in());
 
+#if 0
     // DAVE EDIT: Call Avoid_uLanding monitor
     if (avoid_uLanding.monitor()) {
-        // if uLanding detects obstacle to avoid, run the pitch_cmd controller
-        avoid_uLanding.stabilize_avoid(target_pitch);
+        // if uLanding detects obstacle to avoid, run the avoidance controller
+        avoid_uLanding.stabilize_avoid(target_pitch, target_roll, aparm.angle_max);
     }
-
+#endif
     // call attitude controller
     attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate, get_smoothing_gain());
 
