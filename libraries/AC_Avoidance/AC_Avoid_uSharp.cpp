@@ -132,9 +132,6 @@ AC_Avoid_uSharp::AC_Avoid_uSharp(const AP_Motors& motors, const uSharp& usharp, 
 {
     AP_Param::setup_object_defaults(this, var_info);
 
-    // initialize avoidance flags
-    _avoid = false;
-    _avoid_prev = false;
 }
 
 // monitor - monitor whether or not to avoid an obstacle
@@ -174,8 +171,8 @@ void AC_Avoid_uSharp::stabilize_avoid(float &pitch_cmd, float &roll_cmd, float a
         _pid_avoid_roll.set_input_filter_d(lean_angle_err.y);
 
         // compute avoidance pitch/roll commands from pid controller
-        avoid_pitch_cmd = constrain_float(_pid_avoid_pitch.get_pi(), -_uSharp_avoid_angle_lim, _uSharp_avoid_angle_lim);
-        avoid_roll_cmd  = constrain_float(_pid_avoid_roll.get_pi(), -_uSharp_avoid_angle_lim, _uSharp_avoid_angle_lim);
+        float avoid_pitch_cmd = constrain_float(_pid_avoid_pitch.get_pi(), -_uSharp_avoid_angle_lim, _uSharp_avoid_angle_lim);
+        float avoid_roll_cmd  = constrain_float(_pid_avoid_roll.get_pi(), -_uSharp_avoid_angle_lim, _uSharp_avoid_angle_lim);
 
         // add allowable compenent(s) of pilot commands to the avoidance-
         // synthesized pitch/roll commands
@@ -225,26 +222,20 @@ void AC_Avoid_uSharp::loiter_avoid(float pitch_in, float roll_in, float &pitch_o
         float err = _uSharp_avoid_dist - _usharp.distance_cm();
 
         // pass error to the PID controller for avoidance distance
-        _pid_stab_avoid.set_input_filter_d(err);
+        _pid_avoid_pitch.set_input_filter_d(err);
 
         // compute pitch command from pid controller
-        pitch_out = _pid_stab_avoid.get_pi();
+        pitch_out = _pid_avoid_pitch.get_pi();
 
         // limit pitch_cmd
-        pitch_out = constrain_float(pitch_out, -_uSharp_avoid_pitch_lim, _uSharp_avoid_pitch_lim);
+        pitch_out = constrain_float(pitch_out, -_uSharp_avoid_angle_lim, _uSharp_avoid_angle_lim);
     }
 
-    // set previous avoid state for next step through the monitor
-    if (_usharp.distance_cm() > _buffer) {
-            _avoid = false;
-    }
-
-    _avoid_prev = _avoid;
 }
 
 // update_loiter_target - move the target position in loiter mode to maintain body y-axis position/velocity command,
 //                      but align body x-axis target position with current position
-void AC_Avoid_uLanding::update_loiter_target(void)
+void AC_Avoid_uSharp::update_loiter_target(void)
 {
     Vector3f curr_pos = _inav.get_position();
     Vector3f pos_targ = _pos_control.get_pos_target();
@@ -264,8 +255,7 @@ void AC_Avoid_uLanding::update_loiter_target(void)
     distToMoveTarget = distToDest * sinf(courseToDest - heading);
 
     // only move the target position if it is behind the obstacle we're avoiding
-    if ((_uLanding_looking_fwd && (abs(courseToDest - heading) < M_PI_2)) ||
-       (!_uLanding_looking_fwd && (abs(courseToDest - heading) > M_PI_2))) {
+    if (abs(courseToDest - heading) < M_PI_2) {
 
         // calculate new target x/y position, 
         // offset from current position in the body y-axis direction
@@ -333,6 +323,7 @@ bool AC_Avoid_uSharp::moved_past_buffer(void)
                 _avoid[i] = false;
             }else{
                 tmp++;
+            }
         }
 
     _avoid_prev[i] = _avoid[i];
@@ -412,7 +403,7 @@ void AC_Avoid_uSharp::reset_integrators(void)
 
         if (_avoid[i] && !_avoid_prev[i]) {
 
-            if (abs( cosf(_usharp_panel_azimuth[i])) ) > 0)
+            if (abs( cosf(_usharp_panel_azimuth[i]) ) > 0)
                 reset_pitch = true;
 
             if (abs( sinf(_usharp_panel_azimuth[i]) ) > 0)
@@ -420,10 +411,10 @@ void AC_Avoid_uSharp::reset_integrators(void)
         }
     }
 
-    if reset_pitch
+    if (reset_pitch)
         _pid_avoid_pitch.reset_I();
 
-    if reset_roll
+    if (reset_roll)
         _pid_avoid_roll.reset_I();
 }
 

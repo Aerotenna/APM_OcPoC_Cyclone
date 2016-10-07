@@ -93,16 +93,16 @@ bool uSharp_Backend::get_reading(uSharp::uSharp_State &state_ref)
         return false;
     }
     if ( count[0] != 0 ){
-    	state_ref.distance[0] = 2.5 * sum[0] / count[0];
+    	state_ref.distance[0] = USHARP_MEASUREMENT_COEFFICIENT * sum[0] / count[0];
     }
     if ( count[1] != 0) {
-    	state_ref.distance[1] = 2.5 * sum[1] / count[1];
+    	state_ref.distance[1] = USHARP_MEASUREMENT_COEFFICIENT * sum[1] / count[1];
     }
     if ( count[2] != 0) {
-    	state_ref.distance[2] = 2.5 * sum[2] / count[2];
+    	state_ref.distance[2] = USHARP_MEASUREMENT_COEFFICIENT * sum[2] / count[2];
     }
     if ( count[3] != 0) {
-    	state_ref.distance[3] = 2.5 * sum[3] / count[3];
+    	state_ref.distance[3] = USHARP_MEASUREMENT_COEFFICIENT * sum[3] / count[3];
     }
 
 

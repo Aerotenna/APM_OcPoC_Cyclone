@@ -10,6 +10,8 @@
 #include <AP_Motors/AP_Motors.h>
 #include <AC_PID/AC_PID.h>
 #include <AP_uSharp/uSharp.h>
+#include <AP_InertialNav/AP_InertialNav.h>     // Inertial Navigation library
+#include <AC_AttitudeControl/AC_PosControl.h>      // Position control library
 
 #define USHARP_ENABLE_DEFAULT 0
 #define NUM_USHARP_PANELS 4
@@ -60,7 +62,7 @@ private:
     //                - units:  distance - cm
     //                          panel_azimuth - radians
     //                          pitch_err/roll_err - centi-degrees
-    void calc_pitch_roll_err(void);
+    Vector2f calc_pitch_roll_err(void);
 
     // moved_past_buffer - check to see if previously detected obstacle is now
     //                     outside of buffer distance; return true if all obstacles
@@ -79,7 +81,7 @@ private:
     void read_usharp(void);
 
     // obstacle_detect - read uSharp and determine if obstacle is present and needs to be avoided
-    bool obstacle_detect(uint16_t dist);
+    bool obstacle_detect();
 
     // update_buffer - update buffer distance based on user parameters
     void update_buffer(float dist, float buffer) { _buffer = dist + buffer;}
@@ -101,11 +103,11 @@ private:
     AP_Float    _uSharp_avoid_dist;
     AP_Float    _uSharp_avoid_dist_buffer;
     AP_Float    _uSharp_avoid_dist_valid;
-    AP_Float    _uSharp_avoid_pitch_lim;
+    AP_Float    _uSharp_avoid_angle_lim;
 
     // internal variables
-    bool      _avoid[NUM_USHARP_PANELS];
-    bool      _avoid_prev[NUM_USHARP_PANELS];
+    bool      _avoid[NUM_USHARP_PANELS] = { false };
+    bool      _avoid_prev[NUM_USHARP_PANELS] = { false };
     bool      _run_avoid[NUM_USHARP_PANELS] = { false };
     float     _buffer;
     float     _dt;

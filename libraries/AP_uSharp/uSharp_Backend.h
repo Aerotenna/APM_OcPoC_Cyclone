@@ -3,6 +3,8 @@
 
 #include "uSharp.h"
 
+#define USHARP_MEASUREMENT_COEFFICIENT 2.5f
+
 class uSharp_Backend
 {
 
