@@ -117,6 +117,7 @@ bool AC_Avoid_uLanding::monitor(void)
         update_buffer(_uLanding_avoid_dist, _uLanding_avoid_dist_buffer);
         _usharp_panel_instance = (_uLanding_looking_fwd ? 0 : (NUM_USHARP_PANELS/2));
         return obstacle_detect(_usharp.distance_cm(_usharp_panel_instance));
+
     }
 }
 
@@ -138,6 +139,7 @@ void AC_Avoid_uLanding::stabilize_avoid(float &pitch_cmd)
     }
 
     if (pilot_cmd_avoidance || (_usharp.distance_cm(_usharp_panel_instance) > _buffer)) {
+
         // allow pilot to maintain pitch command if actively avoiding obstacle
         pitch_cmd = pitch_cmd;
     }else{
@@ -162,6 +164,7 @@ void AC_Avoid_uLanding::stabilize_avoid(float &pitch_cmd)
 
     // set previous avoid state for next step through the monitor
     if (_usharp.distance_cm(_usharp_panel_instance) > _buffer) {
+
             _avoid = false;
     }
 
@@ -192,12 +195,14 @@ void AC_Avoid_uLanding::loiter_avoid(float pitch_in, float &pitch_out)
     }
 
     if (pilot_cmd_avoidance || (_usharp.distance_cm(_usharp_panel_instance) > _buffer)) {
+
         // allow pilot to maintain pitch command if actively avoiding obstacle
         pitch_out = pitch_in;
     }else{
 
         // calcualate distance error
         float err = _uLanding_avoid_dist - _usharp.distance_cm(_usharp_panel_instance);
+
 
         if (!_uLanding_looking_fwd) {
             // if the uLanding sensor is looking backward, flip sign of the error to produce opposite pitch cmd
@@ -216,6 +221,7 @@ void AC_Avoid_uLanding::loiter_avoid(float pitch_in, float &pitch_out)
 
     // set previous avoid state for next step through the monitor
     if (_usharp.distance_cm(_usharp_panel_instance) > _buffer) {
+
             _avoid = false;
     }
 

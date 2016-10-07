@@ -84,6 +84,7 @@ Copter::Copter(void) :
                    pos_control, MAIN_LOOP_SECONDS),
     avoid_uSharp(motors, usharp, inertial_nav, ahrs, 
                    pos_control, MAIN_LOOP_SECONDS),
+
     pmTest1(0),
     fast_loopTimer(0),
     mainLoop_count(0),
