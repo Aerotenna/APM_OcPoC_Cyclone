@@ -189,48 +189,26 @@ void AC_Avoid_uSharp::stabilize_avoid(float &pitch_cmd, float &roll_cmd, float a
         // do lateral tilt to euler roll conversion
         avoid_roll_cmd = (18000/M_PI) * atanf(cosf(avoid_pitch_cmd*(M_PI/18000))*tanf(avoid_roll_cmd*(M_PI/18000)));
 
-        // limit final pitch/roll commands
+        // set final pitch/roll commands
         pitch_cmd = avoid_pitch_cmd;
         roll_cmd  = avoid_roll_cmd;
-
-        // limit pitch_cmd
-        pitch_cmd = constrain_float(pitch_cmd, -_uSharp_avoid_angle_lim, _uSharp_avoid_angle_lim);
     }
 
 }
 
-// loiter_avoid - currently a place holder
+// loiter_avoid - convenience function to avoid messing with the input of wp_nav.get_pitch()/wp_nav.get_roll()
 
 void AC_Avoid_uSharp::loiter_avoid(float pitch_in, float roll_in, float &pitch_out, float &roll_out, float angle_max)
 {
-    // check if integrators need to be reset
-    reset_integrators();
+    // pitch_out and roll_out are used as temporary variables and defined as 0.0. 
+    // set them to the wp_nav pitch/roll commands, which we will regard as similar
+    // to pilot commands
+    pitch_out = pitch_in;
+    roll_out  = roll_in;
 
-    // update target position for loiter mode, since we're actively
-    // avoiding an obstacle
-    update_loiter_target();
-
-
-    if ( moved_past_buffer() ) {
-        // allow pilot to maintain pitch command if obstacle is now
-        // outside buffer distance
-        pitch_out = pitch_in;
-        roll_out  = roll_in;
-    }else{
-
-        // calcualate distance error
-        float err = _uSharp_avoid_dist - _usharp.distance_cm();
-
-        // pass error to the PID controller for avoidance distance
-        _pid_avoid_pitch.set_input_filter_d(err);
-
-        // compute pitch command from pid controller
-        pitch_out = _pid_avoid_pitch.get_pi();
-
-        // limit pitch_cmd
-        pitch_out = constrain_float(pitch_out, -_uSharp_avoid_angle_lim, _uSharp_avoid_angle_lim);
-    }
-
+    // use the stabilize_avoid function to combine loiter mode commands
+    // with obstacle avoidance commands
+    stabilize_avoid(pitch_out, roll_out, angle_max);
 }
 
 // update_loiter_target - move the target position in loiter mode to maintain body y-axis position/velocity command,
@@ -239,46 +217,67 @@ void AC_Avoid_uSharp::update_loiter_target(void)
 {
     Vector3f curr_pos = _inav.get_position();
     Vector3f pos_targ = _pos_control.get_pos_target();
-    float heading = wrap_180_cd(_ahrs.yaw_sensor);
-    float distToDest;
-    float courseToDest;
-    float distToMoveTarget;
+    float heading = wrap_PI( radians(_ahrs.yaw_sensor / 100.0f) );
     Vector2f new_target;
 
     // calculate distance to destination
-    distToDest = norm((pos_targ.y - curr_pos.y),(pos_targ.x - curr_pos.x));
+    float distToDest = norm((pos_targ.y - curr_pos.y),(pos_targ.x - curr_pos.x));
+    float tmp_dist   = distToDest;
 
     // calculate course to destination
-    courseToDest = atan2f((pos_targ.y - curr_pos.y),(pos_targ.x - curr_pos.x));
+    float courseToDest = atan2f((pos_targ.y - curr_pos.y),(pos_targ.x - curr_pos.x));
 
-    // calculate the distance to move the target from the current position
-    distToMoveTarget = distToDest * sinf(courseToDest - heading);
+    // calculate azimuth of destination relative to quad's heading
+    float dest_azimuth = wrap_2PI( courseToDest - heading );
+    float tmp_azimuth = dest_azimuth;
+
+    for (uint8_t i=0; i<NUM_USHARP_PANELS; i++) {
+
+        // calculate difference of azimuth angle between current
+        // tmp_cmd (initialized as pilot's cmd) and the uSharp's 
+        // azimuth
+        float angle_diff = tmp_azimuth - _usharp_panel_azimuth[i];
+
+        // adjust angle_diff for wrap from 0 - 360 deg
+        if (angle_diff > M_PI_2)
+            angle_diff -= M_2PI;
+
+        // adjust loiter's pos_target if current uSharp panel sees
+        // an object AND the current tmp_azimuth is 
+        // within 90 deg of the panel
+        if ( (_avoid[i] || _avoid_prev[i]) &&
+              abs(angle_diff) <= M_PI_2 ) {
+
+            // adjust temporary pos_target change to only allow
+            // pos_target changes perpendicular to the uSharp panel
+            //  - ex: if forward looking panel sees object,
+            //        only allow pos_target changes in the roll axis
+            tmp_dist *= abs( sinf(angle_diff) );
+
+            // adjust tmp_azimuth perpendicular to current uSharp panel
+            tmp_azimuth = angle_diff >= 0 ? \
+                          wrap_2PI( _usharp_panel_azimuth[i] + M_PI_2) : \
+                          wrap_2PI( _usharp_panel_azimuth[i] - M_PI_2);
+        }
+    }
+
 
     // only move the target position if it is behind the obstacle we're avoiding
-    if (abs(courseToDest - heading) < M_PI_2) {
+    if (abs(wrap_PI(tmp_azimuth - dest_azimuth)) > M_PI_2) {
+        // if the final adjusted tmp_azimuth is rotated more than
+        // 90 deg from pilot's command, reset loiter's pos_target to current position
 
-        // calculate new target x/y position, 
-        // offset from current position in the body y-axis direction
-        new_target.x = curr_pos.x - distToMoveTarget * _ahrs.sin_yaw();//sinf(heading);
-        new_target.y = curr_pos.y + distToMoveTarget * _ahrs.cos_yaw();//cosf(heading);
+        _pos_control.set_xy_target(curr_pos.x, curr_pos.y);
+        return;
+    }else{
+        // add allowable component of loiter's pos_target as an
+        // offset from the quad's current position
+        new_target.x = curr_pos.x + tmp_dist * cosf( heading + wrap_PI(tmp_azimuth) );//_ahrs.sin_yaw();
+        new_target.y = curr_pos.y + tmp_dist * sinf( heading + wrap_PI(tmp_azimuth) );//_ahrs.cos_yaw();
 
         // set new target position
         _pos_control.set_xy_target(new_target.x, new_target.y);
     }
-
-// NEW PLAN FOR update_loiter_target:
-/*
-*   - update_loiter_target() shall be a PUBLIC function, called from control_loiter.cpp,
-*     then control_loiter.cpp will call wp_nav.update_loiter again
-*
-*   update_loiter_target() operations:
-*       1. translate pos_target from relative-to-home to azimuth-relative-to-body
-*       2. shift pos_target in similar fashion to add_pilot_cmd() function
-*       3. translate new_pos_target back to relative-to-home
-*
-*/
-
-
 }
 
 // calc_pitch_roll_err - calculate sum of pitch/roll axis errors for uSharp panels
@@ -307,29 +306,36 @@ Vector2f AC_Avoid_uSharp::calc_pitch_roll_err(void)
 
 // moved_past_buffer - check to see if previously detected obstacle is now
 //                     outside of buffer distance
-//                   - assumes we are in avoidance mode, resets _avoid/_avoid_prev
-//                     flags for each panel accordingly
+//                   - assumes we are in avoidance mode for at least one panel, resets
+//                     _avoid/_avoid_prev flags for each panel accordingly
 //                   - return true if all obstacles are now past the buffer distance
 bool AC_Avoid_uSharp::moved_past_buffer(void)
 {
-    int tmp = 0;
+    int count = 0;
     bool beyond_buffer = false;
 
-    for (int i=0; i<NUM_USHARP_PANELS; i++) {
+    for (uint8_t i=0; i<NUM_USHARP_PANELS; i++) {
 
         if (_avoid[i] || _avoid_prev[i]) {
 
             if (_distance_cm[i] > _buffer) {
+                // if we were avoiding an obstacle in front of this uSharp
+                // panel, but its reading is beyond the buffer distance,
+                // reset the panel's _avoid flag.
                 _avoid[i] = false;
             }else{
-                tmp++;
+                // increment the count if we're still avoiding an obstacle
+                // in the direction of this uSharp panel
+                count++;
             }
         }
-
+    // set this uSharp panel's _avoid_prev flag
     _avoid_prev[i] = _avoid[i];
     }
 
-    if (tmp == 0)
+    if (count == 0)
+        // count == 0 means all uSharp panels that saw an obstacle now read
+        // a measurement beyond the buffer distance
         beyond_buffer = true;
 
     return beyond_buffer;
@@ -359,7 +365,7 @@ void AC_Avoid_uSharp::add_pilot_cmd(float pilot_pitch, float pilot_roll, float &
             angle_diff -= M_2PI;
 
         // adjust pilot's command if current uSharp panel sees
-        // and object AND the current tmp_cmd's azimuth is 
+        // an object AND the current tmp_cmd's azimuth is 
         // within 90 deg of the panel
         if ( (_avoid[i] || _avoid_prev[i]) &&
               abs(angle_diff) <= M_PI_2 ) {

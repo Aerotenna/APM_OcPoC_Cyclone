@@ -234,7 +234,7 @@ void AC_Avoid_uLanding::update_loiter_target(void)
 {
     Vector3f curr_pos = _inav.get_position();
     Vector3f pos_targ = _pos_control.get_pos_target();
-    float heading = wrap_180_cd(_ahrs.yaw_sensor);
+    float heading = wrap_PI( radians(_ahrs.yaw_sensor / 100.0f) );
     float distToDest;
     float courseToDest;
     float distToMoveTarget;

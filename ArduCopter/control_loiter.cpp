@@ -169,6 +169,23 @@ void Copter::loiter_run()
 
             // call attitude controller
             attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav.get_roll(), tmp_avoid_pitch, target_yaw_rate, get_smoothing_gain());
+
+        }else if (avoid_uSharp.monitor()) {
+            float tmp_avoid_pitch = 0.0f;
+            float tmp_avoid_roll  = 0.0f;
+
+            // uSharp detects obstacle(s) to avoid, update the loiter pos_target
+            avoid_uSharp.update_loiter_target();
+
+            // run loiter controller
+            wp_nav.update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
+
+            // run the avoidance controller to combine loiter mode commands and avoidance commands
+            avoid_uSharp.loiter_avoid(wp_nav.get_pitch(), wp_nav.get_roll(), tmp_avoid_pitch, tmp_avoid_roll, attitude_control.get_althold_lean_angle_max());
+
+            // call attitude controller
+            attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(tmp_avoid_roll, tmp_avoid_pitch, target_yaw_rate, get_smoothing_gain());
+
         }else{
 
             // run loiter controller

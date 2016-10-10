@@ -46,17 +46,17 @@ public:
     //                 - Units: pitch_cmd, roll_cmd, and angle_max - centi-degrees
     void stabilize_avoid(float &pitch_cmd, float &roll_cmd, float angle_max);
 
-    // loiter_avoid - returns new velocity commands in cm/s to avoid obstacle
-    void loiter_avoid(float pitch_in, float roll_in, float &pitch_out, float &roll_out, float angle_max); 
-
-    static const struct AP_Param::GroupInfo var_info[];
-
-private:
+    // loiter_avoid - convenience function to avoid messing with the input of wp_nav.get_pitch()/wp_nav.get_roll()
+    void loiter_avoid(float pitch_in, float roll_in, float &pitch_out, float &roll_out, float angle_max);
 
     // update_loiter_target - move the target position in loiter mode to maintain 
     //                        body y-axis position/velocity command, but align 
     //                        body x-axis target position with current position
     void update_loiter_target(void);
+
+    static const struct AP_Param::GroupInfo var_info[];
+
+private:
 
     // calc_pitch_roll_err - calculate sum of pitch/roll axis errors for uSharp panels
     //                - units:  distance - cm
