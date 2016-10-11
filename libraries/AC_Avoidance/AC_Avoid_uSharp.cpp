@@ -196,7 +196,8 @@ void AC_Avoid_uSharp::stabilize_avoid(float &pitch_cmd, float &roll_cmd, float a
 
 }
 
-// loiter_avoid - convenience function to avoid messing with the input of wp_nav.get_pitch()/wp_nav.get_roll()
+// loiter_avoid - convenience function to avoid messing with the input of wp_nav.get_pitch() and
+//                wp_nav.get_roll() coming from control_loiter.cpp
 
 void AC_Avoid_uSharp::loiter_avoid(float pitch_in, float roll_in, float &pitch_out, float &roll_out, float angle_max)
 {
@@ -272,8 +273,8 @@ void AC_Avoid_uSharp::update_loiter_target(void)
     }else{
         // add allowable component of loiter's pos_target as an
         // offset from the quad's current position
-        new_target.x = curr_pos.x + tmp_dist * cosf( heading + wrap_PI(tmp_azimuth) );//_ahrs.sin_yaw();
-        new_target.y = curr_pos.y + tmp_dist * sinf( heading + wrap_PI(tmp_azimuth) );//_ahrs.cos_yaw();
+        new_target.x = curr_pos.x + tmp_dist * cosf( heading + wrap_PI(tmp_azimuth) );
+        new_target.y = curr_pos.y + tmp_dist * sinf( heading + wrap_PI(tmp_azimuth) );
 
         // set new target position
         _pos_control.set_xy_target(new_target.x, new_target.y);
