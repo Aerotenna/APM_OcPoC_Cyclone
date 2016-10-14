@@ -198,6 +198,10 @@ void AC_Avoid_uLanding::loiter_avoid(float pitch_in, float &pitch_out)
 
         // allow pilot to maintain pitch command if actively avoiding obstacle
         pitch_out = pitch_in;
+
+        // set loiter mode's pos_target to a reasonable stopping point for smooth transition
+        // out of avoidance logic
+        _pos_control.set_target_to_stopping_point_xy();
     }else{
 
         // calcualate distance error

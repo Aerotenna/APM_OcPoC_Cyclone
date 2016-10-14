@@ -240,8 +240,9 @@ void AC_Avoid_uSharp::update_loiter_target(void)
         float angle_diff = tmp_azimuth - _usharp_panel_azimuth[i];
 
         // adjust angle_diff for wrap from 0 - 360 deg
-        if (angle_diff > M_PI_2)
+        if (angle_diff > M_PI_2) {
             angle_diff -= M_2PI;
+        }
 
         // adjust loiter's pos_target if current uSharp panel sees
         // an object AND the current tmp_azimuth is 
@@ -261,7 +262,6 @@ void AC_Avoid_uSharp::update_loiter_target(void)
                           wrap_2PI( _usharp_panel_azimuth[i] - M_PI_2);
         }
     }
-
 
     // only move the target position if it is behind the obstacle we're avoiding
     if (abs(wrap_PI(tmp_azimuth - dest_azimuth)) > M_PI_2) {
@@ -334,10 +334,11 @@ bool AC_Avoid_uSharp::moved_past_buffer(void)
     _avoid_prev[i] = _avoid[i];
     }
 
-    if (count == 0)
+    if (count == 0) {
         // count == 0 means all uSharp panels that saw an obstacle now read
         // a measurement beyond the buffer distance
         beyond_buffer = true;
+    }
 
     return beyond_buffer;
 }
@@ -362,8 +363,9 @@ void AC_Avoid_uSharp::add_pilot_cmd(float pilot_pitch, float pilot_roll, float &
         float angle_diff = tmp_azimuth - _usharp_panel_azimuth[i];
 
         // adjust angle_diff for wrap from 0 - 360 deg
-        if (angle_diff > M_PI_2)
+        if (angle_diff > M_PI_2) {
             angle_diff -= M_2PI;
+        }
 
         // adjust pilot's command if current uSharp panel sees
         // an object AND the current tmp_cmd's azimuth is 
@@ -410,19 +412,23 @@ void AC_Avoid_uSharp::reset_integrators(void)
 
         if (_avoid[i] && !_avoid_prev[i]) {
 
-            if (abs( cosf(_usharp_panel_azimuth[i]) ) > 0)
+            if (abs( cosf(_usharp_panel_azimuth[i]) ) > 0) {
                 reset_pitch = true;
+            }
 
-            if (abs( sinf(_usharp_panel_azimuth[i]) ) > 0)
+            if (abs( sinf(_usharp_panel_azimuth[i]) ) > 0) {
                 reset_roll = true;
+            }
         }
     }
 
-    if (reset_pitch)
+    if (reset_pitch) {
         _pid_avoid_pitch.reset_I();
+    }
 
-    if (reset_roll)
+    if (reset_roll) {
         _pid_avoid_roll.reset_I();
+    }
 }
 
 // read_usharp - update distance readings from uSharp panels
@@ -463,8 +469,9 @@ bool AC_Avoid_uSharp::obstacle_detect(void)
 
     // cycle through run_avoid flags for all uSharp panels
     for (uint8_t i=0; i<NUM_USHARP_PANELS; i++) {
-        if (_run_avoid[i])
+        if (_run_avoid[i]) {
             sum++;
+        }
     }
 
     // return true (run avoidance algorithm) if any uSharp reading
