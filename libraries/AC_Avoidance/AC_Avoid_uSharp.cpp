@@ -219,7 +219,11 @@ void AC_Avoid_uSharp::update_loiter_target(void)
     Vector3f curr_pos = _inav.get_position();
     Vector3f pos_targ = _pos_control.get_pos_target();
     float heading = wrap_PI( radians(_ahrs.yaw_sensor / 100.0f) );
-    Vector2f new_target;
+
+    // set loiter mode flag for obstacle_detect() function
+    if (!_loiter_mode_avoidance) {
+         _loiter_mode_avoidance = true;
+    }
 
     // calculate distance to destination
     float distToDest = norm((pos_targ.y - curr_pos.y),(pos_targ.x - curr_pos.x));
@@ -264,7 +268,11 @@ void AC_Avoid_uSharp::update_loiter_target(void)
     }
 
     // only move the target position if it is behind the obstacle we're avoiding
-    if (abs(wrap_PI(tmp_azimuth - dest_azimuth)) > M_PI_2) {
+    if ( moved_past_buffer() ) {
+
+        _pos_control.set_target_to_stopping_point_xy();
+        return;
+    }else if (abs(wrap_PI(tmp_azimuth - dest_azimuth)) > M_PI_2) {
         // if the final adjusted tmp_azimuth is rotated more than
         // 90 deg from pilot's command, reset loiter's pos_target to current position
 
@@ -273,6 +281,8 @@ void AC_Avoid_uSharp::update_loiter_target(void)
     }else{
         // add allowable component of loiter's pos_target as an
         // offset from the quad's current position
+        Vector2f new_target;
+
         new_target.x = curr_pos.x + tmp_dist * cosf( heading + wrap_PI(tmp_azimuth) );
         new_target.y = curr_pos.y + tmp_dist * sinf( heading + wrap_PI(tmp_azimuth) );
 
@@ -474,11 +484,22 @@ bool AC_Avoid_uSharp::obstacle_detect(void)
         }
     }
 
-    // return true (run avoidance algorithm) if any uSharp reading
-    // sets run_avoid to true
+    // return true if any uSharp reading sets run_avoid to true
     if (sum > 0) {
         return true;
     }else{
+
+        if (_loiter_mode_avoidance) {
+            // if we've gone through avoidance control while in loiter mode, but
+            // no longer have a valid uSharp reading on any panel, reset loiter
+            // mode pos_target based on stopping point for a smooth transition
+            // out of avoidance control
+            _pos_control.set_target_to_stopping_point_xy();
+
+            // reset the loiter mode flag
+            _loiter_mode_avoidance = false;
+        }
+
         return false;
     }
 }

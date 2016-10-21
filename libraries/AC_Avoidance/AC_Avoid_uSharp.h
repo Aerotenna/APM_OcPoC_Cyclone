@@ -109,6 +109,7 @@ private:
     bool      _avoid[NUM_USHARP_PANELS] = { false };
     bool      _avoid_prev[NUM_USHARP_PANELS] = { false };
     bool      _run_avoid[NUM_USHARP_PANELS] = { false };
+    bool      _loiter_mode_avoidance = false;
     float     _buffer;
     float     _dt;
     uint16_t  _distance_cm[NUM_USHARP_PANELS];

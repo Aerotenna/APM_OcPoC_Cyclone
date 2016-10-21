@@ -305,10 +305,14 @@ struct PACKED log_Control_Tuning {
     float    throttle_hover;
     float    desired_alt;
     float    inav_alt;
-    int32_t  baro_alt;
+/*    int32_t  baro_alt;
     int16_t  desired_rangefinder_alt;
     int16_t  rangefinder_alt;
-    float    terr_alt;
+    float    terr_alt; */
+    uint16_t  uSharp_0;
+    uint16_t  uSharp_1;
+    uint16_t  uSharp_2;
+    uint16_t  uSharp_3;
     int16_t  target_climb_rate;
     int16_t  climb_rate;
 };
@@ -333,10 +337,14 @@ void Copter::Log_Write_Control_Tuning()
         throttle_hover      : motors.get_throttle_hover(),
         desired_alt         : pos_control.get_alt_target() / 100.0f,
         inav_alt            : inertial_nav.get_altitude() / 100.0f,
-        baro_alt            : baro_alt,
+/*        baro_alt            : baro_alt,
         desired_rangefinder_alt : (int16_t)target_rangefinder_alt,
         rangefinder_alt     : rangefinder_state.alt_cm,
-        terr_alt            : terr_alt,
+        terr_alt            : terr_alt, */
+        uSharp_0            : usharp.distance_cm(0),//baro_alt,
+        uSharp_1            : usharp.distance_cm(1),//(int16_t)target_rangefinder_alt,
+        uSharp_2            : usharp.distance_cm(2),//rangefinder_state.alt_cm,
+        uSharp_3            : usharp.distance_cm(3),//terr_alt,
         target_climb_rate   : (int16_t)pos_control.get_vel_target_z(),
         climb_rate          : climb_rate
     };
@@ -765,7 +773,8 @@ const struct LogStructure Copter::log_structure[] = {
     { LOG_NAV_TUNING_MSG, sizeof(log_Nav_Tuning),       
       "NTUN", "Qffffffffff", "TimeUS,DPosX,DPosY,PosX,PosY,DVelX,DVelY,VelX,VelY,DAccX,DAccY" },
     { LOG_CONTROL_TUNING_MSG, sizeof(log_Control_Tuning),
-      "CTUN", "Qffffffeccfhh", "TimeUS,ThI,ABst,ThO,ThH,DAlt,Alt,BAlt,DSAlt,SAlt,TAlt,DCRt,CRt" },
+//      "CTUN", "Qffffffeccfhh", "TimeUS,ThI,ABst,ThO,ThH,DAlt,Alt,BAlt,DSAlt,SAlt,TAlt,DCRt,CRt" },
+      "CTUN", "QffffffCCCChh", "TimeUS,ThI,ABst,ThO,ThH,DAlt,Alt,Shp0,Shp1,Shp2,Shp3,DCRt,CRt" },
     { LOG_PERFORMANCE_MSG, sizeof(log_Performance), 
       "PM",  "QHHIhBHI",    "TimeUS,NLon,NLoop,MaxT,PMT,I2CErr,INSErr,LogDrop" },
     { LOG_MOTBATT_MSG, sizeof(log_MotBatt),
