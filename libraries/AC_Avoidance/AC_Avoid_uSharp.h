@@ -15,10 +15,6 @@
 
 #define USHARP_ENABLE_DEFAULT 0
 #define NUM_USHARP_PANELS 4
-#define PANEL_AZ_1 (0.0f * M_PI / 180.0f)
-#define PANEL_AZ_2 (90.0f * M_PI / 180.0f)
-#define PANEL_AZ_3 (180.0f * M_PI / 180.0f)
-#define PANEL_AZ_4 (270.0f * M_PI / 180.0f)
 #define USHARP_AVOID_DIST_DEFAULT      250.0f // cm
 #define USHARP_AVOID_DIST_BUFF_DEFAULT  50.0f  // cm
 #define USHARP_AVOID_DIST_VALID_DEFAULT 75.0f  // cm
@@ -106,12 +102,12 @@ private:
     AP_Float    _uSharp_avoid_angle_lim;
 
     // internal variables
-    bool      _avoid[NUM_USHARP_PANELS] = { false };
-    bool      _avoid_prev[NUM_USHARP_PANELS] = { false };
-    bool      _run_avoid[NUM_USHARP_PANELS] = { false };
-    bool      _loiter_mode_avoidance = false;
+    bool      _avoid[NUM_USHARP_PANELS];
+    bool      _avoid_prev[NUM_USHARP_PANELS];
+    bool      _run_avoid[NUM_USHARP_PANELS];
+    bool      _loiter_mode_avoidance;
     float     _buffer;
     float     _dt;
     uint16_t  _distance_cm[NUM_USHARP_PANELS];
-    float     _usharp_panel_azimuth[NUM_USHARP_PANELS] = {PANEL_AZ_1, PANEL_AZ_2, PANEL_AZ_3, PANEL_AZ_4};
+    float     _usharp_panel_azimuth[NUM_USHARP_PANELS];
 };

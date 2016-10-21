@@ -132,6 +132,19 @@ AC_Avoid_uSharp::AC_Avoid_uSharp(const AP_Motors& motors, const uSharp& usharp, 
 {
     AP_Param::setup_object_defaults(this, var_info);
 
+    // initialize internal variables
+    _loiter_mode_avoidance = false;
+
+    // initialize variables dependent on number of uSharp panels
+    for (uint8_t i=0; i<NUM_USHARP_PANELS; i++) {
+        // calculate individual panel azimuth based on number of panels
+        _usharp_panel_azimuth[i] = i * (M_2PI / NUM_USHARP_PANELS);
+
+        // set avoid flags for each panel
+        _avoid[i]       = false;
+        _avoid_prev[i]  = false;
+        _run_avoid[i]   = false;
+    }
 }
 
 // monitor - monitor whether or not to avoid an obstacle
@@ -472,7 +485,7 @@ bool AC_Avoid_uSharp::obstacle_detect(void)
 
         // only run avoidance algorithm if we have a valid distance measurement and
         // there is an obstacle within the avoidance distance
-        _run_avoid[i] = uSharp_valid && _avoid;
+        _run_avoid[i] = uSharp_valid && _avoid[i];
     }
 
     int  sum = 0;
