@@ -120,15 +120,15 @@ const AP_Param::GroupInfo AC_Avoid_uSharp::var_info[] = {
 };
 
 /// Constructor
-AC_Avoid_uSharp::AC_Avoid_uSharp(const AP_Motors& motors, const uSharp& usharp, const AP_InertialNav& inav, const AP_AHRS& ahrs, AC_PosControl& pos_control, float dt)
-    : _motors(motors),
-      _usharp(usharp),
-      _inav(inav),
-      _ahrs(ahrs),
-      _pos_control(pos_control),
-      _dt(dt),
-      _pid_avoid_pitch(USHARP_STB_kP, USHARP_STB_kI, USHARP_STB_kD, USHARP_STB_IMAX, USHARP_STB_FILT_HZ, dt),
-      _pid_avoid_roll(USHARP_STB_kP, USHARP_STB_kI, USHARP_STB_kD, USHARP_STB_IMAX, USHARP_STB_FILT_HZ, dt)
+AC_Avoid_uSharp::AC_Avoid_uSharp(const AP_Motors& motors, const uSharp& usharp, const AP_InertialNav& inav, const AP_AHRS& ahrs, AC_PosControl& pos_control, float dt) :
+    _motors(motors),
+    _usharp(usharp),
+    _inav(inav),
+    _ahrs(ahrs),
+    _pos_control(pos_control),
+    _dt(dt),
+    _pid_avoid_pitch(USHARP_STB_kP, USHARP_STB_kI, USHARP_STB_kD, USHARP_STB_IMAX, USHARP_STB_FILT_HZ, dt),
+    _pid_avoid_roll(USHARP_STB_kP, USHARP_STB_kI, USHARP_STB_kD, USHARP_STB_IMAX, USHARP_STB_FILT_HZ, dt)
 {
     AP_Param::setup_object_defaults(this, var_info);
 
@@ -471,7 +471,7 @@ bool AC_Avoid_uSharp::obstacle_detect(void)
     for (uint8_t i=0; i<NUM_USHARP_PANELS; i++) {
 
         // determine if the distance reading is considered valid
-        bool uSharp_valid = _distance_cm[i] > _uSharp_avoid_dist_valid;
+        bool uSharp_valid = _distance_cm[i] < _uSharp_avoid_dist_valid;
 
         if (uSharp_valid && (_distance_cm[i] <= _uSharp_avoid_dist)) {
             // set _avoid flag if uSharp reading is within the avoidance distance

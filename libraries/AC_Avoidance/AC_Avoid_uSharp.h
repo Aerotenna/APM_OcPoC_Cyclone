@@ -17,7 +17,7 @@
 #define NUM_USHARP_PANELS 4
 #define USHARP_AVOID_DIST_DEFAULT      250.0f // cm
 #define USHARP_AVOID_DIST_BUFF_DEFAULT  50.0f  // cm
-#define USHARP_AVOID_DIST_VALID_DEFAULT 75.0f  // cm
+#define USHARP_AVOID_DIST_VALID_DEFAULT 4500.0f  // cm
 #define USHARP_LEAN_ANGLE_LIMIT 2000.0f  // centi-degrees
 #define USHARP_STB_kP        15.0f
 #define USHARP_STB_kI        0.1f
