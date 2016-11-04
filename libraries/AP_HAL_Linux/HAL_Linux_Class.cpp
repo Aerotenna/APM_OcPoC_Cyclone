@@ -141,7 +141,8 @@ static RCInput_Raspilot rcinDriver;
 #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_ZYNQ
 static RCInput_ZYNQ rcinDriver;
 #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_ALTERA
-static RCInput_SBUS rcinDriver;
+//static RCInput_SBUS rcinDriver;
+static RCInput_ZYNQ rcinDriver;
 #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_BEBOP
 static RCInput_UDP  rcinDriver;
 #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_MINLURE

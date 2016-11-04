@@ -1,4 +1,7 @@
+#include <AP_HAL/AP_HAL.h>
 #include "AC_Avoid_uSharp.h"
+
+extern const AP_HAL::HAL& hal;
 
 const AP_Param::GroupInfo AC_Avoid_uSharp::var_info[] = {
 
@@ -25,13 +28,21 @@ const AP_Param::GroupInfo AC_Avoid_uSharp::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("DIST_BUFF",3, AC_Avoid_uSharp, _uSharp_avoid_dist_buffer, USHARP_AVOID_DIST_BUFF_DEFAULT),
 
+    // @Param: DIST_WAIT
+    // @DisplayName: uSharp Avoidance wait distance
+    // @Description: uSharp distance to wait to return to flight path after passing an obstacle
+    // @Units: cm
+    // @Values: 0 1000.0
+    // @User: Standard
+    AP_GROUPINFO("DIST_WAIT",4, AC_Avoid_uSharp, _uSharp_auto_dist_wait, USHARP_AUTO_DIST_WAIT_DEFAULT),
+
     // @Param: RNG_VALID
     // @DisplayName: uSharp Avoidance valid distance
     // @Description: minimum uSharp distance reading required before measurement is considered valid
     // @Units: cm
     // @Values: 31.0 100.0
     // @User: Standard
-    AP_GROUPINFO("RNG_VALID",4, AC_Avoid_uSharp, _uSharp_avoid_dist_valid, USHARP_AVOID_DIST_VALID_DEFAULT),
+    AP_GROUPINFO("RNG_VALID",5, AC_Avoid_uSharp, _uSharp_avoid_dist_valid, USHARP_AVOID_DIST_VALID_DEFAULT),
 
     // @Param: ANGLE_LIM
     // @DisplayName: uSharp Avoidance pitch/roll cmd limit
@@ -39,7 +50,22 @@ const AP_Param::GroupInfo AC_Avoid_uSharp::var_info[] = {
     // @Units: centi-degrees
     // @Values: 1000.0 4500.0 
     // @User: Standard
-    AP_GROUPINFO("ANGLE_LIM",5, AC_Avoid_uSharp, _uSharp_avoid_angle_lim, USHARP_LEAN_ANGLE_LIMIT),
+    AP_GROUPINFO("ANGLE_LIM",6, AC_Avoid_uSharp, _uSharp_avoid_angle_lim, USHARP_LEAN_ANGLE_LIMIT),
+
+    // @Param: AVD_AXIS
+    // @DisplayName: uSharp Avoidance Control Axis
+    // @Description: Stabilize_Avoid's axis to control for obstacle avoidance
+    // @Values: 0:Default (Pitch),1:Alternate (Roll)
+    // @User: Standard
+    AP_GROUPINFO("AVD_AXIS",7, AC_Avoid_uSharp, _uSharp_avoid_axis, USHARP_AVOID_AXIS_DEFAULT),
+
+    // @Param: TIME_WAIT
+    // @DisplayName: uSharp Avoidance wait distance
+    // @Description: uSharp distance to wait to return to flight path after passing an obstacle
+    // @Units: cm
+    // @Values: 0 1000.0
+    // @User: Standard
+    AP_GROUPINFO("TIME_WAIT",8, AC_Avoid_uSharp, _uSharp_auto_wait_time, USHARP_AUTO_WAIT_TIME_DEFAULT),
 
     // @Param: PIT_P
     // @DisplayName: Track Error controller P gain
@@ -76,7 +102,7 @@ const AP_Param::GroupInfo AC_Avoid_uSharp::var_info[] = {
     // @Range: 1 100
     // @Increment: 1
     // @Units: Hz
-    AP_SUBGROUPINFO(_pid_avoid_pitch, "PIT_", 6, AC_Avoid_uSharp, AC_PID),
+    AP_SUBGROUPINFO(_pid_avoid_pitch, "PIT_", 9, AC_Avoid_uSharp, AC_PID),
 
     // @Param: RLL_P
     // @DisplayName: Track Error controller P gain
@@ -113,7 +139,7 @@ const AP_Param::GroupInfo AC_Avoid_uSharp::var_info[] = {
     // @Range: 1 100
     // @Increment: 1
     // @Units: Hz
-    AP_SUBGROUPINFO(_pid_avoid_roll, "RLL_", 7, AC_Avoid_uSharp, AC_PID),
+    AP_SUBGROUPINFO(_pid_avoid_roll, "RLL_", 10, AC_Avoid_uSharp, AC_PID),
 
 
     AP_GROUPEND
@@ -134,6 +160,9 @@ AC_Avoid_uSharp::AC_Avoid_uSharp(const AP_Motors& motors, const uSharp& usharp, 
 
     // initialize internal variables
     _loiter_mode_avoidance = false;
+    _auto_timer     = -1.0f;
+    _auto_wait_time = -1.0f;
+    _auto_hold_roll = false;
 
     // initialize variables dependent on number of uSharp panels
     for (uint8_t i=0; i<NUM_USHARP_PANELS; i++) {
@@ -173,19 +202,40 @@ void AC_Avoid_uSharp::stabilize_avoid(float &pitch_cmd, float &roll_cmd, float a
         pitch_cmd = pitch_cmd;
         roll_cmd  = roll_cmd;
 
+        if (_auto_hold_roll) {
+            if ((AP_HAL::millis() - _auto_timer) < _uSharp_auto_wait_time) {
+                roll_cmd = _pid_avoid_roll.kP() * 100.0f;;
+            }else{
+                _auto_hold_roll = false;
+                _auto_timer = -1.0f;
+            }
+        }
     }else{
 
         // get pitch/roll error calculation
         Vector2f lean_angle_err = calc_pitch_roll_err();
 
-
         // pass error to the PID controllers for avoidance distance
         _pid_avoid_pitch.set_input_filter_d(lean_angle_err.x);
         _pid_avoid_roll.set_input_filter_d(lean_angle_err.y);
 
-        // compute avoidance pitch/roll commands from pid controller
-        float avoid_pitch_cmd = constrain_float(_pid_avoid_pitch.get_pi(), -_uSharp_avoid_angle_lim, _uSharp_avoid_angle_lim);
-        float avoid_roll_cmd  = constrain_float(_pid_avoid_roll.get_pi(), -_uSharp_avoid_angle_lim, _uSharp_avoid_angle_lim);
+        float avoid_pitch_cmd;
+        float avoid_roll_cmd;
+
+        if (_uSharp_avoid_axis) {
+            avoid_pitch_cmd = 0.0f;
+            avoid_roll_cmd  = _pid_avoid_roll.kP() * 100.0f;
+
+            if (!_auto_hold_roll) {
+                _auto_hold_roll = true;
+                _auto_timer = AP_HAL::millis();
+            }
+        }else{
+
+            // compute avoidance pitch/roll commands from pid controller
+            avoid_pitch_cmd = constrain_float(_pid_avoid_pitch.get_pi(), -_uSharp_avoid_angle_lim, _uSharp_avoid_angle_lim);
+            avoid_roll_cmd  = constrain_float(_pid_avoid_roll.get_pi(), -_uSharp_avoid_angle_lim, _uSharp_avoid_angle_lim);
+        }
 
         // add allowable compenent(s) of pilot commands to the avoidance-
         // synthesized pitch/roll commands
@@ -224,6 +274,74 @@ void AC_Avoid_uSharp::loiter_avoid(float pitch_in, float roll_in, float &pitch_o
     // with obstacle avoidance commands
     stabilize_avoid(pitch_out, roll_out, angle_max);
 }
+
+// auto_avoid - function to avoid obstacles during a auto mission without impeding
+//              progression of mission
+//            - Current implementation is only for a forward looking uLanding sensor,
+//              rather than a full uSharp sensor, hence no call to calc_pitch_roll_err(),
+//              and use of only the first index of _distance_cm
+void AC_Avoid_uSharp::auto_avoid(float pitch_in, float roll_in, float &pitch_out, float &roll_out, float angle_max)
+{
+    const Vector3f &vel_curr = _inav.get_velocity();  // current velocity in cm/s
+    float course_angle = wrap_PI(atan2f(vel_curr.y, vel_curr.x));
+    float heading = wrap_PI( radians(_ahrs.yaw_sensor / 100.0f) );
+
+    //float approach_rate   = (_distance_cm_prev[0] - _distance_cm[0])/_dt_auto;
+    float approach_rate   = _inav.get_velocity_xy() * cosf(heading - course_angle);
+
+    // for divide-by-zero protection, use the min of approach_rate or 25 cm/s
+    float time_to_contact = approach_rate <= 25.0f ? (_distance_cm[0] / 25.0f) : (_distance_cm[0] / approach_rate);
+
+
+    if ( moved_past_buffer() ) {
+
+        pitch_out = pitch_in;            
+
+        if (_auto_hold_roll && (AP_HAL::millis() - _auto_timer) < _auto_wait_time ) {
+            roll_out  = 0.0f;
+        }else{
+            roll_out = roll_in;
+            _auto_timer = -1.0f;
+            _auto_wait_time = -1.0f;
+            _auto_hold_roll = false;
+        }
+        return;
+
+    }else if (approach_rate <= 0.0f) {
+        // exit auto_avoid logic if we're not actually moving toward the obstacle
+        pitch_out = pitch_in;
+        roll_out  = roll_in;
+        return;
+    }
+
+    // if distance to object is too close, run stabilize_avoid to stop in the pitch axis
+    // and take the time to go around the object
+    if (_distance_cm[0] <= (200.0f * MIN(approach_rate/150.0f, 1.0f)) ) {
+
+        pitch_out = pitch_in;
+        float tmp = roll_in;
+        stabilize_avoid(pitch_out, tmp, angle_max);
+
+        // set a constant roll cmd while backing away from obstacle
+        roll_out = _uSharp_avoid_angle_lim / 2.0f;
+    }else{
+        pitch_out = pitch_in;
+        roll_out  = MAX((2000.0f / time_to_contact), _uSharp_avoid_angle_lim);
+    }
+
+    if (_auto_timer < 0) {
+        _auto_hold_roll = true;
+    }
+    _auto_timer = AP_HAL::millis();
+    _auto_wait_time = time_to_contact + (_uSharp_auto_dist_wait / MIN(approach_rate*approach_rate,75.0) );
+
+
+// TO DO:
+    // - Add offset in roll axis to the pos_target to keep from immediately rolling back
+    //   toward the detected obstacle. Hold this adjustment for the last known time_to_contact
+
+}
+
 
 // update_loiter_target - move the target position in loiter mode to maintain body y-axis position/velocity command,
 //                      but align body x-axis target position with current position
@@ -316,13 +434,15 @@ Vector2f AC_Avoid_uSharp::calc_pitch_roll_err(void)
 
     for (uint8_t i=0; i<NUM_USHARP_PANELS; i++) {
 
-        // calculate error between avoidance distance and the uSharp distance measurement
-        tmp_err = _distance_cm[i] - _uSharp_avoid_dist;
+        if (_avoid[i]) {
+            // calculate error between avoidance distance and the uSharp distance measurement
+            tmp_err = _distance_cm[i] - _uSharp_avoid_dist;
 
-        // apply the error calculation to the pitch and roll axes based on
-        // the azimuth of the uSharp panel
-        pitch_err -= tmp_err * cosf(_usharp_panel_azimuth[i]);
-        roll_err  += tmp_err * sinf(_usharp_panel_azimuth[i]);
+            // apply the error calculation to the pitch and roll axes based on
+            // the azimuth of the uSharp panel
+            pitch_err -= tmp_err * cosf(_usharp_panel_azimuth[i]);
+            roll_err  += tmp_err * sinf(_usharp_panel_azimuth[i]);
+        }
     }
 
     return Vector2f(pitch_err, roll_err);
@@ -471,7 +591,8 @@ bool AC_Avoid_uSharp::obstacle_detect(void)
     for (uint8_t i=0; i<NUM_USHARP_PANELS; i++) {
 
         // determine if the distance reading is considered valid
-        bool uSharp_valid = _distance_cm[i] < _uSharp_avoid_dist_valid;
+        //bool uSharp_valid = _distance_cm[i] < _uSharp_avoid_dist_valid;
+        bool uSharp_valid = _distance_cm[i] > _uSharp_avoid_dist_valid;
 
         if (uSharp_valid && (_distance_cm[i] <= _uSharp_avoid_dist)) {
             // set _avoid flag if uSharp reading is within the avoidance distance
@@ -498,7 +619,7 @@ bool AC_Avoid_uSharp::obstacle_detect(void)
     }
 
     // return true if any uSharp reading sets run_avoid to true
-    if (sum > 0) {
+    if (sum > 0 || _auto_hold_roll) {
         return true;
     }else{
 

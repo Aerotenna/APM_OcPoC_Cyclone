@@ -17,8 +17,12 @@
 #define NUM_USHARP_PANELS 4
 #define USHARP_AVOID_DIST_DEFAULT      250.0f // cm
 #define USHARP_AVOID_DIST_BUFF_DEFAULT  50.0f  // cm
-#define USHARP_AVOID_DIST_VALID_DEFAULT 4500.0f  // cm
+#define USHARP_AUTO_DIST_WAIT_DEFAULT 150.0f //cm
+#define USHARP_AUTO_WAIT_TIME_DEFAULT 1.0f //sec
+//#define USHARP_AVOID_DIST_VALID_DEFAULT 4500.0f  // cm
+#define USHARP_AVOID_DIST_VALID_DEFAULT 75.0f  // cm
 #define USHARP_LEAN_ANGLE_LIMIT 2000.0f  // centi-degrees
+#define USHARP_AVOID_AXIS_DEFAULT 0
 #define USHARP_STB_kP        15.0f
 #define USHARP_STB_kI        0.1f
 #define USHARP_STB_kD        0.0f
@@ -45,10 +49,16 @@ public:
     // loiter_avoid - convenience function to avoid messing with the input of wp_nav.get_pitch()/wp_nav.get_roll()
     void loiter_avoid(float pitch_in, float roll_in, float &pitch_out, float &roll_out, float angle_max);
 
+    // auto_avoid - function to avoid obstacles during a auto mission without impeding
+    //              progression of mission
+    void auto_avoid(float pitch_in, float roll_in, float &pitch_out, float &roll_out, float angle_max);
+
     // update_loiter_target - move the target position in loiter mode to maintain 
     //                        body y-axis position/velocity command, but align 
     //                        body x-axis target position with current position
     void update_loiter_target(void);
+
+    uint16_t usharp_avoid(uint8_t instance) {return _avoid[instance];}
 
     static const struct AP_Param::GroupInfo var_info[];
 
@@ -96,10 +106,13 @@ private:
     // parameters
     AP_Int8     _uSharp_avoid_enable;
     AP_Int8     _uSharp_looking_fwd;
+    AP_Int8     _uSharp_avoid_axis;
     AP_Float    _uSharp_avoid_dist;
     AP_Float    _uSharp_avoid_dist_buffer;
+    AP_Float    _uSharp_auto_dist_wait;
     AP_Float    _uSharp_avoid_dist_valid;
     AP_Float    _uSharp_avoid_angle_lim;
+    AP_Float    _uSharp_auto_wait_time;
 
     // internal variables
     bool      _avoid[NUM_USHARP_PANELS];
@@ -108,6 +121,9 @@ private:
     bool      _loiter_mode_avoidance;
     float     _buffer;
     float     _dt;
+    float     _auto_timer;
+    float     _auto_wait_time;
+    bool      _auto_hold_roll;
     uint16_t  _distance_cm[NUM_USHARP_PANELS];
     float     _usharp_panel_azimuth[NUM_USHARP_PANELS];
 };

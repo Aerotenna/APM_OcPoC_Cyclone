@@ -259,13 +259,31 @@ void Copter::auto_wp_run()
     // call z-axis position controller (wpnav should have already updated it's alt target)
     pos_control.update_z_controller();
 
-    // call attitude controller
-    if (auto_yaw_mode == AUTO_YAW_HOLD) {
-        // roll & pitch from waypoint controller, yaw rate from pilot
-        attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate, get_smoothing_gain());
+    if (avoid_uSharp.monitor()) {
+            float tmp_avoid_pitch = 0.0f;
+            float tmp_avoid_roll  = 0.0f;
+
+            // run the avoidance controller to combine loiter mode commands and avoidance commands
+            avoid_uSharp.auto_avoid(wp_nav.get_pitch(), wp_nav.get_roll(), tmp_avoid_pitch, tmp_avoid_roll, attitude_control.get_althold_lean_angle_max());
+
+            // call attitude controller
+            if (auto_yaw_mode == AUTO_YAW_HOLD) {
+                // roll & pitch from waypoint controller, yaw rate from pilot
+                attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(tmp_avoid_roll, tmp_avoid_pitch, target_yaw_rate, get_smoothing_gain());
+            }else{
+                // roll, pitch from waypoint controller, yaw heading from auto_heading()
+                attitude_control.input_euler_angle_roll_pitch_yaw(tmp_avoid_roll, tmp_avoid_pitch, get_auto_heading(),true, get_smoothing_gain());
+            }
     }else{
-        // roll, pitch from waypoint controller, yaw heading from auto_heading()
-        attitude_control.input_euler_angle_roll_pitch_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), get_auto_heading(),true, get_smoothing_gain());
+
+        // call attitude controller
+        if (auto_yaw_mode == AUTO_YAW_HOLD) {
+            // roll & pitch from waypoint controller, yaw rate from pilot
+            attitude_control.input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate, get_smoothing_gain());
+        }else{
+            // roll, pitch from waypoint controller, yaw heading from auto_heading()
+            attitude_control.input_euler_angle_roll_pitch_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), get_auto_heading(),true, get_smoothing_gain());
+        }
     }
 }
 

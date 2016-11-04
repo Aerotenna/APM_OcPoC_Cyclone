@@ -1097,12 +1097,12 @@ void Copter::convert_pid_parameters(void)
         { Parameters::k_param_pid_rate_yaw, 0, AP_PARAM_FLOAT, "ATC_RAT_YAW_P" },
         { Parameters::k_param_pid_rate_yaw, 1, AP_PARAM_FLOAT, "ATC_RAT_YAW_I" },
         { Parameters::k_param_pid_rate_yaw, 2, AP_PARAM_FLOAT, "ATC_RAT_YAW_D" },
-        { Parameters::k_param_pid_stabilize_roll, 0, AP_PARAM_FLOAT, "ATC_STB_RLL_kP" },
-        { Parameters::k_param_pid_stabilize_roll, 1, AP_PARAM_FLOAT, "ATC_STB_RLL_kI" },
-        { Parameters::k_param_pid_stabilize_roll, 2, AP_PARAM_FLOAT, "ATC_STB_RLL_kD" },
-        { Parameters::k_param_pid_stabilize_pitch, 0, AP_PARAM_FLOAT, "ATC_STB_PIT_kP" },
-        { Parameters::k_param_pid_stabilize_pitch, 1, AP_PARAM_FLOAT, "ATC_STB_PIT_kI" },
-        { Parameters::k_param_pid_stabilize_pitch, 2, AP_PARAM_FLOAT, "ATC_STB_PIT_kD" },
+        { Parameters::k_param_pid_stabilize_roll, 0, AP_PARAM_FLOAT, "ATC_STB_RLL_P" },
+        { Parameters::k_param_pid_stabilize_roll, 1, AP_PARAM_FLOAT, "ATC_STB_RLL_I" },
+        { Parameters::k_param_pid_stabilize_roll, 2, AP_PARAM_FLOAT, "ATC_STB_RLL_D" },
+        { Parameters::k_param_pid_stabilize_pitch, 0, AP_PARAM_FLOAT, "ATC_STB_PIT_P" },
+        { Parameters::k_param_pid_stabilize_pitch, 1, AP_PARAM_FLOAT, "ATC_STB_PIT_I" },
+        { Parameters::k_param_pid_stabilize_pitch, 2, AP_PARAM_FLOAT, "ATC_STB_PIT_D" },
 #if FRAME_CONFIG == HELI_FRAME
         { Parameters::k_param_pid_rate_roll,  4, AP_PARAM_FLOAT, "ATC_RAT_RLL_VFF" },
         { Parameters::k_param_pid_rate_pitch, 4, AP_PARAM_FLOAT, "ATC_RAT_PIT_VFF" },
@@ -1113,8 +1113,8 @@ void Copter::convert_pid_parameters(void)
         { Parameters::k_param_pid_rate_roll,  5, AP_PARAM_FLOAT, "ATC_RAT_RLL_IMAX" },
         { Parameters::k_param_pid_rate_pitch, 5, AP_PARAM_FLOAT, "ATC_RAT_PIT_IMAX" },
         { Parameters::k_param_pid_rate_yaw,   5, AP_PARAM_FLOAT, "ATC_RAT_YAW_IMAX" },
-        { Parameters::k_param_pid_stabilize_roll, 5, AP_PARAM_FLOAT, "ATC_STB_RLL_IMX" },
-        { Parameters::k_param_pid_stabilize_pitch, 5, AP_PARAM_FLOAT, "ATC_STB_PIT_IMX" },
+        { Parameters::k_param_pid_stabilize_roll, 5, AP_PARAM_FLOAT, "ATC_STB_RLL_IMAX" },
+        { Parameters::k_param_pid_stabilize_pitch, 5, AP_PARAM_FLOAT, "ATC_STB_PIT_IMAX" },
 #if FRAME_CONFIG == HELI_FRAME
         { Parameters::k_param_pid_rate_roll,  7, AP_PARAM_FLOAT, "ATC_RAT_RLL_ILMI" },
         { Parameters::k_param_pid_rate_pitch, 7, AP_PARAM_FLOAT, "ATC_RAT_PIT_ILMI" },
@@ -1128,8 +1128,8 @@ void Copter::convert_pid_parameters(void)
         { Parameters::k_param_pid_rate_roll, 6, AP_PARAM_FLOAT, "ATC_RAT_RLL_FILT" },
         { Parameters::k_param_pid_rate_pitch, 6, AP_PARAM_FLOAT, "ATC_RAT_PIT_FILT" },
         { Parameters::k_param_pid_rate_yaw, 6, AP_PARAM_FLOAT, "ATC_RAT_YAW_FILT" },
-        { Parameters::k_param_pid_stabilize_roll, 6, AP_PARAM_FLOAT, "ATC_STB_RLL_FLT" },
-        { Parameters::k_param_pid_stabilize_pitch, 6, AP_PARAM_FLOAT, "ATC_STB_PIT_FLT" }
+        { Parameters::k_param_pid_stabilize_roll, 6, AP_PARAM_FLOAT, "ATC_STB_RLL_FILT" },
+        { Parameters::k_param_pid_stabilize_pitch, 6, AP_PARAM_FLOAT, "ATC_STB_PIT_FILT" }
     };
     AP_Param::ConversionInfo throttle_conversion_info[] = {
         { Parameters::k_param_throttle_min, 0, AP_PARAM_FLOAT, "MOT_SPIN_MIN" },

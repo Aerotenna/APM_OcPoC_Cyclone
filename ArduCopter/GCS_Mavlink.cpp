@@ -408,10 +408,10 @@ void NOINLINE Copter::send_rangefinder(mavlink_channel_t chan)
     }*/
     mavlink_msg_rangefinder_send(
             chan,
-//            rangefinder.distance_cm() * 0.01f,
+            rangefinder.distance_cm() * 0.01f,
 //            rangefinder.voltage_mv() * 0.001f);
-            usharp.distance_cm(2) * 0.01f,
-			usharp.distance_cm(3) * 0.01f );
+//            usharp.distance_cm(0) * 0.01f,
+			usharp.distance_cm(0) * 0.01f );
 
 }
 #endif
