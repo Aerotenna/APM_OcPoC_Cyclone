@@ -125,6 +125,13 @@ SPIDesc SPIDeviceManager::_device[] = {
     SPIDesc("aeroio", 1, 1, SPI_MODE_0, 8, SPI_CS_KERNEL,  10*MHZ, 10*MHZ),
     SPIDesc("bmi160", 3, 0, SPI_MODE_3, 8, SPI_CS_KERNEL, 1*MHZ, 10*MHZ),
 };
+#elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_OCPOC_CYCLONE
+SPIDesc SPIDeviceManager::_device[] = {
+    /* MPU9250 is restricted to 1MHz for non-data and interrupt registers */
+    SPIDesc("mpu9250",    32765, 1,  SPI_MODE_3, 8, SPI_CS_KERNEL,  1*MHZ, 1*MHZ),
+    SPIDesc("ms5611",     32766, 0,  SPI_MODE_3, 8, SPI_CS_KERNEL,  1*MHZ, 1*MHZ),
+    SPIDesc("ublox",      32766, 1,  SPI_MODE_0, 8, SPI_CS_KERNEL,  5*MHZ, 5*MHZ),
+};
 #else
 // empty device table
 SPIDesc SPIDeviceManager::_device[] = {
@@ -246,6 +253,43 @@ bool SPIDevice::set_speed(AP_HAL::Device::Speed speed)
 bool SPIDevice::transfer(const uint8_t *send, uint32_t send_len,
                          uint8_t *recv, uint32_t recv_len)
 {
+#if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_OCPOC_CYCLONE
+    struct spi_ioc_transfer msgs[1] = { };
+    unsigned nmsgs = 1;
+
+    assert(_bus.fd >= 0);
+
+    uint8_t len_t = 0;
+    uint8_t i     = 0;
+
+    uint8_t send_t[32] = { 0, };
+    uint8_t recv_t[32] = { 0, };
+    if ( send_len == 1 && recv_len == 1)
+    {
+        len_t = 2;
+        send_t[0] = *send;
+    }
+    else if ( recv_len == 0 )
+    {
+        len_t = 2;
+        send_t[0] = *send;
+        send_t[1] = *(send + 1);
+    }
+    else
+    {
+        len_t = recv_len + 1;
+        send_t[0] = *send;
+    }
+
+
+    msgs[0].tx_buf = (uint64_t) send_t;
+    msgs[0].rx_buf = (uint64_t) recv_t;
+    msgs[0].len = len_t;
+    msgs[0].speed_hz = _speed;
+    msgs[0].delay_usecs = 0;
+    msgs[0].bits_per_word = _desc.bits_per_word;
+    msgs[0].cs_change = 0;
+#else
     struct spi_ioc_transfer msgs[2] = { };
     unsigned nmsgs = 0;
 
@@ -276,6 +320,7 @@ bool SPIDevice::transfer(const uint8_t *send, uint32_t send_len,
     if (!nmsgs) {
         return false;
     }
+#endif
 
     int r;
     if (_bus.last_mode == _desc.mode) {
@@ -317,6 +362,16 @@ bool SPIDevice::transfer(const uint8_t *send, uint32_t send_len,
                             _bus.fd, strerror(errno));
         return false;
     }
+
+#if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_OCPOC_CYCLONE
+   if (send_len == 1 && recv_len == 1) {
+        *recv = recv_t[1];
+    }else if (recv_len != 0) {
+        for (i = 0; i < recv_len; i++) {
+            *(recv + i) = recv_t[i+1];
+        }
+    }
+#endif
 
     return true;
 }
