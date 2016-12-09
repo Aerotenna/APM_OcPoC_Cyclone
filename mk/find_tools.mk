@@ -63,6 +63,15 @@ ZYNQ_LD      :=  arm-xilinx-linux-gnueabi-g++
 ZYNQ_GDB     :=  arm-xilinx-linux-gnueabi-gdb
 ZYNQ_OBJCOPY :=  arm-xilinx-linux-gnueabi-objcopy
 
+# toolchains for ocpoc_cyclone
+OCPOC_CYCLONE_CXX     :=  arm-linux-gnueabi-g++
+OCPOC_CYCLONE_CC      :=  arm-linux-gnueabi-gcc
+OCPOC_CYCLONE_AS      :=  arm-linux-gnueabi-gcc
+OCPOC_CYCLONE_AR      :=  arm-linux-gnueabi-ar
+OCPOC_CYCLONE_LD      :=  arm-linux-gnueabi-g++
+OCPOC_CYCLONE_GDB     :=  arm-linux-gnueabi-gdb
+OCPOC_CYCLONE_OBJCOPY :=  arm-linux-gnueabi-objcopy
+
 # enable ccache if installed
 CCACHE :=  $(call FIND_TOOL,ccache)
 export CCACHE

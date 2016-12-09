@@ -31,6 +31,10 @@ zynq: all
 zynq-hil: EXTRAFLAGS += "-DHILMODE=HIL_MODE_ATTITUDE -DHIL_MODE=HIL_MODE_SENSORS "
 zynq-hil : zynq
 
+ocpoc_cyclone: HAL_BOARD = HAL_BOARD_LINUX
+ocpoc_cyclone: TOOLCHAIN = OCPOC_CYCLONE
+ocpoc_cyclone: all
+
 pxf: HAL_BOARD = HAL_BOARD_LINUX
 pxf: TOOLCHAIN = BBONE
 pxf: BUILDSYS_DEPRECATED = 1
